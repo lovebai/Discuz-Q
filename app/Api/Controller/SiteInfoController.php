@@ -38,7 +38,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class SiteInfoController extends DzqAdminController
 {
-    use QcloudStatisticsTrait;
+//    use QcloudStatisticsTrait;
 
     /**
      * @var Application
@@ -102,6 +102,7 @@ class SiteInfoController extends DzqAdminController
             'categories' => serialize(Category::all()->toArray())
         ];
 
+        /*
         try {
             $this->report($data)->then(function (ResponseInterface $response) {
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -113,6 +114,7 @@ class SiteInfoController extends DzqAdminController
         } catch (Exception $e) {
             $this->outPut(ResponseCode::NET_ERROR, $e);
         }
+        */
 
         $dec = $this->camelData($decomposer->getSiteinfo());
 

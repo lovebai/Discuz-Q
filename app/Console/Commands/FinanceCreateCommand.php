@@ -27,7 +27,7 @@ use Discuz\Qcloud\QcloudStatisticsTrait;
 
 class FinanceCreateCommand extends AbstractCommand
 {
-    use QcloudStatisticsTrait;
+//    use QcloudStatisticsTrait;
 
     protected $signature = 'finance:create';
 
@@ -49,7 +49,7 @@ class FinanceCreateCommand extends AbstractCommand
 
     public function handle()
     {
-        $this->postStatisData();
+//        $this->postStatisData();
         $date = Carbon::parse('-1 day')->toDateString();
         $dateTimeBegin = $date . ' 00:00:00';
         $dateTimeEnd = $date . ' 23:59:59';
