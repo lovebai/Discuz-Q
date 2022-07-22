@@ -31,7 +31,7 @@ use TencentCloud\Ms\V20180408\MsClient;
 
 class CheckQcloudController extends DzqAdminController
 {
-    use QcloudStatisticsTrait;
+//    use QcloudStatisticsTrait;
 
     protected function checkRequestPermissions(UserRepository $userRepo)
     {
@@ -66,7 +66,7 @@ class CheckQcloudController extends DzqAdminController
         $cache = app('cache');
         $is_uin_statis = $cache->get('uin_statis_check_qcloud');
         if (empty($is_uin_statis)) {
-            $this->uinStatis();
+//            $this->uinStatis();
             $cache->put('uin_statis_check_qcloud', 1, 24 * 60 * 60);
         }
 
