@@ -114,7 +114,7 @@ class QcloudDaily
 
         ];
         try {
-            $this->qcloudDaily($json)->wait();
+//            $this->qcloudDaily($json)->wait();//停止上报
             // 下面进行缓存是为了方便后面的上报直接调用
             app('cache')->put('qcloud_uin', $uin, $cache_time);
             app('cache')->put('qcloud_daily_'.$settings['site_id'], 1, $cache_time);

@@ -109,9 +109,10 @@ class QcloudSettingReport
                     'appid' => Arr::get($qcloud_setting, 'qcloud_captcha_app_id')
                 ];
                 try {
-                    $this->qcloudReport($data)->then(function (ResponseInterface $response) {
-                        $response->getBody()->getContents();
-                    })->wait();
+//                    $this->qcloudReport($data)->then(function (ResponseInterface $response) {
+//                        $response->getBody()->getContents();
+//                    })->wait();
+//                    停止上报
                 } catch (Exception $e) {
                     //
                 }
