@@ -10,16 +10,10 @@
  * 服务器环境需求为： **PHP 7.2.5+** 和 **MySQL 5.7+**, 并且需要安装 [Composer](https://getcomposer.org/)。
 
  * 下载项目后运行 `composer install` 命令，可能会提示缺少 ./framework 目录，自行创建即可，无提示则略过。 
-  
-  ![pic](https://file.52ziji.cn/api/v3/file/source/1713/053553.png?sign=wk7DNb5Qm3xqSATLrJna5xmMwjDRRC7f4qgO_DUaVx0%3D%3A0)
-  
-如果在执行过程中遇到上图中错误，则先执行 `composer require discuzq/core`，然后在执行`composer update`即可(报错主要是使用了非官方的Core核心)
 
  * 打开域名访问，由于未放置前端代码，打开会报错，前端代码自行编译上传，安装访问域名`/insatll`
 
- 
 
-----
 
 ----
 
