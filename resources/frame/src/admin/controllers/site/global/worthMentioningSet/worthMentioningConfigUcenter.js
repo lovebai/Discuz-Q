@@ -19,54 +19,55 @@ export default {
     loadStatus(){
       //初始化
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{}
       }).then(data=>{
-        console.log(data);
         if (data.errors){
           this.$message.error(data.errors[0].code);
-        }else {
-          this.valueKey = data.readdata._data.ucenter.ucenter_key;
-          this.valueUrl = data.readdata._data.ucenter.ucenter_url;
-          this.valueAppid = data.readdata._data.ucenter.ucenter_appid;
+        } else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
+          const {Data: forumData} = data;
+          this.valueKey = forumData.ucenter.ucenterKey;
+          this.valueUrl = forumData.ucenter.ucenterUrl;
+          this.valueAppid = forumData.ucenter.ucenterAppid;
         }
       })
     },
     submitConfiguration(){
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-              "attributes":{
-               "key":"ucenter_appid",
-               "value":this.valueAppid,
-               "tag": 'ucenter'
-              }
+              "key":"ucenter_appid",
+              "value":this.valueAppid,
+              "tag": 'ucenter'
            },
             {
-               "attributes":{
-                "key":"ucenter_url",
-                "value":this.valueUrl,
-                "tag": 'ucenter'
-               }
+              "key":"ucenter_url",
+              "value":this.valueUrl,
+              "tag": 'ucenter'
             },
             {
-              "attributes":{
-               "key":"ucenter_key",
-               "value":this.valueKey,
-               "tag": 'ucenter'
-              }
+              "key":"ucenter_key",
+              "value":this.valueKey,
+              "tag": 'ucenter'
             },
           ]
         }
       }).then(data=>{
-        console.log(data);
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({
             message: '提交成功',
             type: 'success'

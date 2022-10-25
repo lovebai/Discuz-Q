@@ -66,7 +66,7 @@ export default {
           label: '打款失败'
         }
       ],                          //搜索-状态
-      statusSelect: '1',          //状态选中
+      statusSelect: '',          //状态选中
       visible:false,
 
       total:0,                    //总数
@@ -77,33 +77,33 @@ export default {
     }
   },
   methods:{
+    handleTimeChange () {
+      if (this.applicationTime != null) {
+        this.applicationTime[0] = this.applicationTime[0] + '-00-00-00';
+        this.applicationTime[1] = this.applicationTime[1] + '-24-00-00';
+      }
+    },
     /**
      * 状态码转换为中文
      */
-    cashStatus(status,data){
+    cashStatus(status, data){
       switch (status){
         case 1:
-          if (!data.error_message){
+          if (!data.errorMessage){
             return '待审核'
           } else {
-            return "待审核，原因：" + data.error_message;
+            return "待审核，原因：" + data.errorMessage;
           }
-          break;
         case 2:
           return "审核通过";
-          break;
         case 3:
           return "审核不通过，原因：" + data.remark;
-          break;
         case 4:
           return "待打款";
-          break;
         case 5:
           return "已打款";
-          break;
         case 6:
-          return "打款失败，原因：" + data.error_message;
-          break;
+          return "打款失败，原因：" + data.errorMessage;
         default:
           return "未知状态";
       }
@@ -112,22 +112,21 @@ export default {
      * 收款账号
      */
     accountNumber(num) {
-      if (num._data.cash_type === 1) {
+      if (num.cashType === 1) {
         if (num.wechat) {
-          return num.wechat._data.mp_openid || num.wechat._data.min_openid;
+          return num.wechat.mpOpenid || num.wechat.minOpenid;
         } else {
           return '';
         }
       } else {
-        return num._data.cash_mobile;
+        return num.tradeNo;
       }
     },
     toexamine(num) {
-      console.log(num);
-      if (num._data.cash_status == 1 && num._data.cash_type === 1) {
+      if (num.cashStatus == 1 && num.cashType === 1) {
         return true;
       }
-      if (num._data.cash_status == 1 && num._data.cash_type === 0) {
+      if (num.cashStatus == 1 && num.cashType === 0) {
         return false;
       }
     },
@@ -173,19 +172,14 @@ export default {
       switch (status){
         case 2:
           return "标记打款";
-          break;
         case 3:
           return "审核拒绝";
-          break;
         case 4:
           return "标记打款";
-          break;
         case 5:
           return "标记打款";
-          break;
         case 6:
           return "打款失败"
-          break;
         default:
           return "未知状态";
       }
@@ -194,12 +188,7 @@ export default {
      * 提现申请搜索
      */
     searchClick(){
-      if (this.applicationTime == null){
-        this.applicationTime = ['','']
-      } else if(this.applicationTime[0] !== '' && this.applicationTime[1] !== ''){
-        this.applicationTime[0] = this.applicationTime[0] + '-00-00-00';
-        this.applicationTime[1] = this.applicationTime[1] + '-24-00-00';
-      }
+      this.applicationTime = this.applicationTime == null ? ['',''] : this.applicationTime;
       this.currentPaga = 1;
       this.getReflectList();
     },
@@ -223,27 +212,30 @@ export default {
     * */
     getReflectList(){
       this.appFetch({
-        url:'reflect',
+        url:'cashLogs_get_v3',
         method:'get',
         data:{
-          include:['user','userWallet', 'wechat'],
-          'filter[cash_status]':this.statusSelect,
-          'page[number]':this.currentPaga,
-          'page[size]':10,
-          'filter[cash_sn]':this.cashSn,
-          'filter[username]':this.operationUser,
-          'filter[start_time]':this.applicationTime[0],
-          'filter[end_time]':this.applicationTime[1]
+          'filter[cashStatus]':this.statusSelect,
+          'page':this.currentPaga,
+          'perPage':10,
+          'filter[cashSn]':this.cashSn,
+          'filter[nickname]':this.operationUser,
+          'filter[startTime]':this.applicationTime[0],
+          'filter[endTime]':this.applicationTime[1]
         }
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.tableData = [];
-          this.tableData = res.readdata;
-          console.log(this.tableData);
-          this.total = res.meta.total;
-          this.pageCount = res.meta.pageCount;
+          const { Data: data } = res;
+          this.tableData = data.pageData || [];
+          this.total = data.totalCount;
+          this.pageCount = data.totalPage;
         }
       }).catch(err=>{
       })
@@ -252,30 +244,31 @@ export default {
     * 提交操作
     * */
     postReview(data){
+      if (data.status === 3 && !data.remark) {
+        this.$message.warning('理由不能为空！');
+        return;
+      }
       this.appFetch({
-        url:'review',
+        url:'cashReview_post_v3',
         method:'post',
-        standard: false,
         data:{
           'ids':data.id,
-          'cash_status':data.status,
+          'cashStatus':data.status,
           'remark':data.remark
         }
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          if (res.data.result[data.id] === 'success') {
-            this.getReflectList();
-            this.$message({
-              message: '提交成功！',
-              type: 'success'
-            });
-          } else if (res.data.result[data.id] === 'failure') {
-            this.$message.error('提交错误！请重新提交');
-          } else {
-            this.$message.error('未知错误，请刷新页面后重新提交');
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          this.getReflectList();
+          this.$message({
+            message: '提交成功！',
+            type: 'success'
+          });
         }
       }).catch(err=>{
       })

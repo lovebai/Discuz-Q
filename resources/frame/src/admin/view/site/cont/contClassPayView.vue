@@ -78,7 +78,7 @@
               <el-button type="text" slot="reference">删除</el-button>
             </el-popover>
 
-            <el-button type="text" @click="submitChildClick(scope.row)" v-if="!scope.row.isShow&&!scope.row.id" :loading="childLoading">确认</el-button>
+            <el-button type="text" @click="submitChildClick(scope.row)" v-if="!scope.row.isShow && !scope.row.id" :loading="childLoading" :disabled="classcCnfirm">确认</el-button>
             <el-popover
               width="100"
               placement="top"
@@ -120,7 +120,6 @@
       <Card class="footer-btn">
         <el-button
           type="primary"
-          :loading="subLoading"
           size="medium"
           @click="submitClick"
           >提交</el-button
@@ -139,7 +138,6 @@
           <el-button
             size="medium"
             style="margin-left: 10PX"
-            :loading="delLoading"
             :disabled="deleteStatus"
             slot="reference"
             >删除</el-button

@@ -8,27 +8,27 @@
           <div class="cont-arrange__rt-main-header">
 
             <div class="cont-arrange__rt-main-header__release">
-              <p v-if="$attrs.author" ref="userName">
-                <a :href="'/pages/profile/index?userId=' + $attrs.userId" style="color: #333333;" target="_blank">
+              <p v-if="$attrs.author" ref="userName" class="cont-arrange-p">
+                <a :href="'/user/' + $attrs.userId" style="color: #333333;" target="_blank">
                   {{$attrs.author}}
                 </a>
               </p>
-              <p v-if="$attrs.replyBy" ref="userName">
-                <a :href="'/pages/profile/index?userId=' + $attrs.userId" style="color: #333333;" target="_blank">
+              <p v-if="$attrs.replyBy" ref="userName" class="cont-arrange-p">
+                <a :href="'/user/' + $attrs.userId" style="color: #333333;" target="_blank">
                   {{$attrs.replyBy}}
                 </a>
               </p>
-              <p v-if="$attrs.establish" ref="userName">
-                <a :href="'/pages/profile/index?userId=' + $attrs.userId" style="color: #333333;" target="_blank">
+              <p v-if="$attrs.establish" ref="userName" class="cont-arrange-p">
+                <a :href="'/user/' + $attrs.userId" style="color: #333333;" target="_blank">
                   {{$attrs.establish}}
                 </a>
               </p>
-              <span v-if="$attrs.author">发布于</span>
-              <span v-if="$attrs.establish">创建于</span>
-              <span v-if="$attrs.replyBy">回复主题</span>
-              <p v-if="$attrs.time">{{$attrs.time}}</p>
-              <p v-if="$attrs.theme">{{$attrs.theme}}</p>
-              <p v-if="$attrs.themeName" ref="themeName" :class="$attrs.themeName?'themeName':''" :style=themeNameStyle >
+              <p class="cont-arrange-span" v-if="$attrs.author">发布于</p>
+              <p class="cont-arrange-span" v-if="$attrs.establish">创建于</p>
+              <p class="cont-arrange-span" v-if="$attrs.replyBy">回复主题</p>
+              <p v-if="$attrs.time" class="cont-arrange-title">{{$attrs.time}}</p>
+              <p v-if="$attrs.theme"  class="cont-arrange-title">{{$attrs.theme}}</p>
+              <p v-if="$attrs.themeName" ref="themeName" :class="$attrs.themeName ? 'themeName':'' ">
                 {{$attrs.themeName}}
                 <span v-if="$attrs.titleIcon" class="iconfont cont-arrange__rt-main-header__release-title-icon" :class="$attrs.titleIcon"></span>
               </p>

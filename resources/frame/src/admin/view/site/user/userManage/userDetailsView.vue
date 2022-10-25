@@ -58,6 +58,12 @@
       </CardRow>
     </Card>
 
+    <Card header="昵称：">
+      <CardRow>
+        <el-input v-model="nickName"></el-input>
+      </CardRow>
+    </Card>
+
     <Card header="旧密码：" v-if="noAdmin">
       <CardRow description="如果不更改密码此处请留空">
         <el-input
@@ -93,10 +99,9 @@
 
     <Card header="用户角色：">
       <CardRow>
-        <el-select v-model="userRole[0]" placeholder="请选择">
+        <el-select :value="userRole" placeholder="请选择" @change="groupSwitch">
           <el-option
             v-for="item in options"
-            :disabled="item.value === '6' || item.value === '7'"
             :key="item.value"
             :label="item.label"
             :value="item.value"
@@ -156,8 +161,8 @@
       <p>{{ userInfo.lastLoginIp }}</p>
     </Card>
 
-    <Card header="微信昵称：" v-if="wechatNickName">
-      <p>{{ wechatNickName }}</p>
+    <Card header="微信昵称：" v-if="userInfo.wxNickname">
+      <p>{{ userInfo.wxNickname }}</p>
     </Card>
 
     <Card header="性别：" v-if="sex">
@@ -177,7 +182,7 @@
       :header="items.name + '：'"
       :class="(items.type === 4 || items.type === 5) ? 'upload-demo-img' : ''"
       :key="index">
-      <p class="user-details-box-extend" v-if="items.type === 0 || items.type === 1">{{items.fields_ext}}</p>
+      <p class="user-details-box-extend" v-if="items.type === 0 || items.type === 1">{{items.fieldsExt}}</p>
       <div v-if="items.type === 3 || items.type === 2">
         <span>{{extendUsers(items)}}</span>
       </div>
@@ -186,7 +191,7 @@
           class="upload-demo"
           :on-preview="handlePreview"
           :on-remove="handleRemove"
-          :file-list="items.fields_ext"
+          :file-list="items.fieldsExt"
           list-type="picture">
         </el-upload>
       </div>
@@ -196,9 +201,18 @@
           ref="upload"
           :on-preview="handlePreview"
           :on-remove="handleRemove"
-          :file-list="items.fields_ext"
+          :file-list="items.fieldsExt"
           :auto-upload="false">
         </el-upload>
+      </div>
+    </Card>
+    
+    <Card header="邀请注册：">
+      <div class="invite-users" v-for="(item, index) in userInviteList" :key="index">
+        <p class="invite-users-subscript">{{index + 1}}</p>
+        <p class="invite-users-head" @click="jumpUserDetails(item.userId)"><img :src="item.avatarUrl ? item.avatarUrl : '/static-admin/images/noavatar.gif'"></p>
+        <p class="invite-users-name" @click="jumpUserDetails(item.userId)">{{item.nickname}}</p>
+        <p class="invite-users-time">{{ $dayjs(item.updatedAt).format("YYYY-MM-DD HH:mm") }}</p>
       </div>
     </Card>
 

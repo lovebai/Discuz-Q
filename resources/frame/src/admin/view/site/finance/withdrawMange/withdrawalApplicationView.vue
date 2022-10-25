@@ -17,7 +17,9 @@
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            :picker-options="pickerOptions">
+            :picker-options="pickerOptions"
+            @change="handleTimeChange"
+          >
           </el-date-picker>
         </div>
 
@@ -28,7 +30,7 @@
 
         <div class="withdrawal-application__search-condition">
           <span class="withdrawal-application__search-condition__title">状态：</span>
-          <el-select v-model="statusSelect" placeholder="请选择">
+          <el-select v-model="statusSelect" placeholder="请选择" clearable>
             <el-option
               v-for="item in statusOptions"
               :key="item.value"
@@ -49,74 +51,68 @@
           style="width: 100%">
 
           <el-table-column
-            prop="_data.cash_sn"
+            prop="cashSn"
             label="流水号"
             min-width="160">
           </el-table-column>
 
           <el-table-column
-            prop="user._data.username"
+            prop="nickname"
             label="操作用户"
             width="110">
           </el-table-column>
           
           <el-table-column
-            :prop="_data.cash_type == 1 ? '微信零钱' : '人工打款'"
+            :prop="cashType == 1 ? '微信零钱' : '人工打款'"
             label="提现方式"
             width="110">
-            <template slot-scope="scope">{{scope.row._data.cash_type == 1 ? type1 : type2}}</template>
+            <template slot-scope="scope">{{scope.row.cashType == 1 ? type1 : type2}}</template>
           </el-table-column>
 
           <el-table-column
-            prop="_data.cash_apply_amount"
+            prop="cashApplyAmount"
             label="提现金额（元）"
             width="110">
           </el-table-column>
           
           <el-table-column
             label="收款账号"
-            width="150">
+            width="210">
              <template slot-scope="scope">{{accountNumber(scope.row)}}</template>
           </el-table-column>
 
           <el-table-column
-            prop="_data.created_at"
             label="申请时间"
             min-width="160">
-            <template slot-scope="scope">{{formatDate(scope.row._data.created_at)}}</template>
+            <template slot-scope="scope">{{formatDate(scope.row.createdAt)}}</template>
           </el-table-column>
 
           <el-table-column
             label="状态"
             show-overflow-tooltip>
-            <template slot-scope="scope">{{cashStatus(scope.row._data.cash_status,scope.row._data)}}</template>
+            <template slot-scope="scope">{{cashStatus(scope.row.cashStatus,scope.row)}}</template>
           </el-table-column>
 
           <el-table-column
             label="操作"
             show-overflow-tooltip>
             <template slot-scope="scope">
-              <div v-if="scope.row._data.cash_status === 1">
+              <div v-if="scope.row.cashStatus === 1">
                 <el-popover
                   width="100"
                   placement="top"
-                  v-if="scope.row._data.cash_type === 1"
                   :ref="`popover-${scope.$index}`">
                   <p>确定通过该提现吗？</p>
                   <div style="text-align: right; margin: 10PX 0 0 0 ">
-                    <el-button type="danger" size="mini" @click="noReviewClick(scope.row._data.id);scope._self.$refs[`popover-${scope.$index}`].doClose()">
+                    <el-button type="danger" size="mini" @click="noReviewClick(scope.row.id);scope._self.$refs[`popover-${scope.$index}`].doClose()">
                       不通过
                     </el-button>
-                    <el-button type="primary" size="mini" @click="reviewClick(scope.row._data.id);scope._self.$refs[`popover-${scope.$index}`].doClose()" >通过</el-button>
+                    <el-button type="primary" size="mini" @click="reviewClick(scope.row.id);scope._self.$refs[`popover-${scope.$index}`].doClose()" >通过</el-button>
                   </div>
-                  <el-button v-if="scope.row._data.cash_type === 1" type="text" size="small" slot="reference">审核</el-button>
+                  <el-button type="text" size="small" slot="reference">审核</el-button>
                 </el-popover>
-                <div v-else>
-                  <p class="toexaminebtn" @click="noReviewClick(scope.row._data.id)">审核拒绝</p>
-                  <p class="toexaminebtn" @click="reviewClicks(scope.row._data.id)">标记打款</p>
-                </div>
               </div>
-              <p v-else>{{auditstatus(scope.row._data.cash_status)}}</p>
+              <p v-else>{{auditstatus(scope.row.cashStatus)}}</p>
             </template>
           </el-table-column>
 

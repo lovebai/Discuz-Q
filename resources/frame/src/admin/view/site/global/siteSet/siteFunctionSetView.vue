@@ -1,75 +1,36 @@
 <template>
   <div class="site-function-set-box">
-    <!-- 发布功能 -->
-    <Card>
-      <CardRow class="publishing-title" description="生效范围">
-        发布功能
-      </CardRow>
-    </Card>
-    
-    <Card >
-      <CardRow class="card-points" description="允许站点发布文字帖">
-        <el-checkbox v-model="publishing.text">文字</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布帖子">
-        <el-checkbox v-model="publishing.post">帖子</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布图片帖">
-        <el-checkbox v-model="publishing.picture">图片</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布视频帖">
-        <el-checkbox v-model="publishing.video">视频</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布语音帖">
-        <el-checkbox v-model="publishing.voice">语音</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布商品帖">
-        <el-checkbox v-model="publishing.goods">商品</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <Card >
-      <CardRow class="card-points" description="允许站点发布问答帖">
-        <el-checkbox v-model="publishing.question" @change="handleQuestionChange">问答</el-checkbox>
-      </CardRow>
-    </Card>
-
-    <!-- 其它功能 -->
     <Card>
       <CardRow class="publishing-title other">
         其它功能
       </CardRow>
     </Card>
-    <Card>
+
+    <!-- <Card>
       <CardRow
         class="card-points"
         description="开启后，用户角色将可以配置价格和有效期，用户可在前台进行用户角色购买"
       >
         <el-checkbox v-model="purchase">权限购买功能</el-checkbox>
       </CardRow>
-    </Card>
+    </Card> -->
     <Card>
       <CardRow
         class="card-points"
-        description="允许发布的内容被其它用户打赏"
+        description="关闭后，这些功能将无法在站内使用。(仅限小程序)"
       >
-        <el-checkbox v-model="reward">打赏功能</el-checkbox>
+        <el-checkbox v-model="reward">打赏、悬赏、红包、匿名、私信、商品、帖子付费、用户组付费、充值，提现</el-checkbox>
       </CardRow>
+    </Card>
+   
+   <Card class="recharge-points">
+      <div class="recharge-points__lf">
+        <el-checkbox v-model="recharge">充值</el-checkbox>
+      </div>
+      <div class="recharge-points__rf">
+        <p>开启后，用户可在站内自主充值钱包余额。</p>
+        <p>根据相关规定，开启自动充值功能站长需先取得ICP增值业务许可证，请确保已获取相关资质后开启本功能，否则责任自负</p>
+      </div>
     </Card>
 
     <el-button type="primary" size="medium" @click="handlePublishingSubmit">提交</el-button>

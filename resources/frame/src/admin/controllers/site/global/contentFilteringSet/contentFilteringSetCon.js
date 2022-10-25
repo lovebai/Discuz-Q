@@ -17,9 +17,8 @@ export default {
       tableData: [],
       multipleSelection: [],
       tableDataLength: '',
-      // disabled:true,
       createCategoriesStatus: false,   //添加分类状态
-      exportUrl: appConfig.baseUrl + '/api/stop-words/export?token=Bearer ' + token,
+      exportUrl: appConfig.baseUrl + '/api/backAdmin/stopWords/export',
       options: [
         {
           value: '{IGNORE}',
@@ -50,6 +49,7 @@ export default {
         //   label: '审核'
         // }
       ],
+      optionsIpData: [],
       serachVal: '',
       checked: false,
       searchData: [],//搜索后的数据
@@ -58,25 +58,21 @@ export default {
       radio2: "1",
       total: 0, //总条数
       pageLimit: 20, //每页多少条
-      pageNum: 0, //当前页
+      pageNum: 1, //当前页
       userLoadMoreStatus: true,
       userLoadMorePageChange: false,
-      // loginStatus:'',  //default  batchSet
       deleteStatus: true,
-      // contentParams: {
-      //   'filter[p]': '',
-      //   'page[number]': 1,
-      // }
-
       deleteList: [],
       tableAdd: false,
-
+      ipDeleteStatus: true,
+      multipleSelectionIp: '',
     }
   },
   created() {
     // this.handleSearchUser(true);  //初始化页面数据
     // this.pageNum  = Number(webDb.getLItem('currentPag'))||1;
     // this.handleSearchUser(Number(webDb.getLItem('currentPag'))||1);
+    this.tencentCloudStatus();
   },
   beforeRouteEnter(to, from, next) {
     next(vm => {
@@ -88,6 +84,35 @@ export default {
     })
   },
   methods: {
+    tencentCloudStatus() {
+      this.appFetch({
+        url: 'forum_get_v3',
+        method: 'get',
+        data: {}
+      }).then(res => {
+        if (res.errors) {
+          this.$message.error(res.errors[0].code);
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: forumData} = res;
+          const ipData = forumData.other.innerNetIp;
+          this.optionsIpData = [];
+          if (ipData && ipData.length > 0) {
+            ipData.forEach((item,index) => {
+              const division = item.split('/');
+              this.optionsIpData.push({
+                domainName: division[0],
+                domainMask: division[1],
+                domainId: index,
+              })
+            })
+          }
+        }
+      })
+    },
     getCreated(state) {
       if (state) {
         this.pageNum = 1
@@ -110,37 +135,73 @@ export default {
       this.multipleSelection = val;
       this.deleteStatus = this.multipleSelection.length < 1;
     },
-
+    deleteChanges(val) {
+      this.multipleSelectionIp = val;
+      this.ipDeleteStatus = val.length < 1;
+    },
+    ipDataDelete() {
+      this.multipleSelectionIp.forEach((item, index) => {
+        this.optionsIpData.forEach((items, indexs) => {
+          if (item.domainId === items.domainId) {
+            this.optionsIpData.splice(indexs, 1);
+          }
+        })
+      })
+      this.ipDataLoginStatus();
+    },
     onSearch(val) {
       this.searchVal = val;
       this.pageNum = 1;
       this.handleSearchUser(true);
     },
+    async exportUrlContent() {
+      try {
+        const response = await this.appFetch({
+          url: 'stopwords_export_v3',
+          method: 'get',
+          data: {
+            'keyword': this.serachVal,
+          }
+        })
+        const blob = new Blob([response], { type: 'application/x-xls' });
+        const url = window.URL || window.webkitURL || window.moxURL;
+        const downloadHref = url.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = downloadHref;
+        a.download = 'stop-words.txt';
+        a.click();
+        a = null;
+      } catch (err) {
+
+      }
+    },
     async handleSearchUser(initStatus = false) {
       try {
         const response = await this.appFetch({
-          url: 'serachWords',
+          url: 'stopwords_get_v3',
           method: 'get',
           data: {
-            'filter[q]': this.serachVal,
-            "page[limit]": this.pageLimit,
-            "page[number]": this.pageNum
+            'filter[keyword]': this.serachVal,
+            "perPage": this.pageLimit,
+            "page": this.pageNum
           }
         })
         if (response.errors) {
           this.$message.error(response.errors[0].code);
         } else {
+          if (response.Code !== 0) {
+            this.$message.error(response.Message);
+            return
+          }
           if (initStatus) {
             this.tableData = [];
           }
-
-          this.tableData = this.tableData.concat(response.readdata).map((v) => {
-            if (v._data.replacement === undefined) {
-              v._data.replacement = '';
+          const {Data: data} = response;
+          this.tableData = this.tableData.concat(data.pageData).map((v) => {
+            if (v.replacement === undefined) {
+              v.replacement = '';
             }
-            this.total = response.meta.total;
-            // this.pageNum = response.meta.pageCount;
-            // this.total = response.meta ? response.meta.total : 0;
+            this.total = data.totalCount;
             return v;
           });
         }
@@ -157,17 +218,17 @@ export default {
     },
 
     selectChange(scope) {
-      if (scope) {
-        if (scope.row._data.ugc !== '{REPLACE}' && scope.row._data.username !== '{REPLACE}') {
-          this.tableData[scope.$index]._data.replacement = '';
-        }
-      }
+      // if (scope) {
+      //   if (scope.row.ugc !== '{REPLACE}' && scope.row.username !== '{REPLACE}') {
+      //     this.tableData[scope.$index].replacement = '';
+      //   }
+      // }
     },
 
     async loginStatus() {  //批量提交接口
 
       let result = this.tableData.filter((v) => {
-        return v._data.addInputFlag;
+        return v.addInputFlag;
       })
 
       result = result.concat(this.multipleSelection);
@@ -180,25 +241,23 @@ export default {
         let words = [];
 
         for (let i = 0, len = this.tableData.length; i < len; i++) {
-          const _data = this.tableData[i]._data;
-          const { ugc, username, signature, dialog, find, replacement } = _data;
-          if (replacement === '' && ugc === '{REPLACE}' && username === '{REPLACE}') {
-            continue;
-          }
+          const _data = this.tableData[i];
+          const { ugc, username, signature, dialog, find, replacement, nickname} = _data;
+          // if (replacement === '' && ugc === '{REPLACE}') {
+          //   continue;
+          // }
           let item = '';
-
-          if (ugc === '{REPLACE}' && username === '{REPLACE}') {
-            item = `${find}=${replacement}|`
-          } else if (ugc === '{REPLACE}' && username !== '{REPLACE}') {
-            item = `${find}=${replacement}|${username}`
-          } else if (username === '{REPLACE}' && ugc !== '{REPLACE}') {
-            item = `${find}=${replacement}|${ugc}`
-          } else if (username !== '{REPLACE}' && ugc !== '{REPLACE}') {
-            item = `${find}=${ugc}|${username}`
+          const ugcData = ugc ? ugc : '{IGNORE}';
+          const usernameData = username ? username : '{IGNORE}';
+          const signatureData = signature ? signature : '{IGNORE}';
+          const dialogData = dialog ? dialog : '{IGNORE}';
+          const nicknameData = nickname ? nickname : '{IGNORE}';
+          const replacementData = replacement ? replacement : '**';
+          if (ugcData !== '{REPLACE}') {
+            item = `${find}=${ugcData}|${usernameData}|${signatureData}|${dialogData}|${nicknameData}`
+          } else {
+            item = `${find}=${replacementData}|${ugcData}|${usernameData}|${signatureData}|${dialogData}|${nicknameData}`
           }
-          
-          item += `|${signature}|${dialog}`;
-
           words.push(item);
         }
 
@@ -207,58 +266,86 @@ export default {
         }
 
         await this.appFetch({
-          url: 'batchSubmit',
+          url: 'stopwords_batch_v3',
           method: 'post',
           standard: false,
           data: {
-            "data": {
-              "type": "stop-words",
-              "words": words,
-              "overwrite": true
-            }
+            "words": words,
+            "overwrite": true
           }
         })
-        // if (res.errors){
-        //   this.$message.error(res.errors[0].code);
-        // }else{
-        // this.pageNum  = 1
         this.handleSearchUser(true);
         this.$message({ message: '提交成功', type: 'success' });
-        // }
-
       } catch (err) {
-        console.error(err, 'function loginStatus error')
+        console.error(err)
       }
 
     },
     tableContAdd() {
       this.tableData.push({
-        _data: {
-          find: "",
-          username: "",
-          ugc: "",
-          replacement: "",
-          addInputFlag: true,
-        }
+        find: "",
+        username: "",
+        ugc: "",
+        replacement: "",
+        addInputFlag: true,
       })
       this.tableAdd = true
+    },
+    increaseIpAdd() {
+      this.optionsIpData.push({
+        domainName: '',
+        domainMask: '',
+        domainId: this.optionsIpData.length,
+      });
+    },
+    async ipDataLoginStatus() {
+      let ipDataArr = [];
+      this.optionsIpData.forEach((item, index) => {
+        ipDataArr.push(`${item.domainName}/${item.domainMask}`)
+      })
+      await this.appFetch({
+        url:'settings_post_v3',
+        method:'post',
+        data:{
+          "data":[
+            {
+              "key":'inner_net_ip',
+              "value": ipDataArr,
+              "tag": "default"
+            },
+          ]
+        }
+      }).then(res=>{
+        if(res.errors){
+          throw new Error(res.errors[0].code);
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          this.$message({ message: '提交成功', type: 'success' });
+        }
+      })
     },
     deleteWords() {
       this.deleteList = []
       for (var i = 0; i < this.multipleSelection.length; i++) {
-        this.deleteList.push(this.multipleSelection[i]._data.id)
+        this.deleteList.push(this.multipleSelection[i].id)
       }
       this.appFetch({
-        url: 'deleteWords',
-        method: 'delete',
-        splice: this.deleteList.join(","),
+        url: 'stopwords_delete_v3',
+        method: 'post',
         data: {
-
+          'ids': this.deleteList.join(",")
         }
       }).then(res => {
         if (res.errors) {
           this.$message.error(res.errors[0].code);
         } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.handleSearchUser(true);
         }
       })

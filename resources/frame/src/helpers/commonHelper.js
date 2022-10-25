@@ -3,7 +3,6 @@
  */
 
 import Vue from "vue";
-import appFetch from "axiosHelper.js";
 import appConfig from "../../config/appConfig";
 
 const appCommonH = {};
@@ -443,7 +442,106 @@ appCommonH.setPageTitle = function (type,data,title) {
   return document.title = title;
 };
 
+appCommonH.dataTypeJudgment = function (data, val) {
+  const newData = { text: data.text || '' };
+  const values = Object.values(data.indexes || {});
+  let displayVal = '';
+  values.forEach((item) => {
+    const { tomId } = item;
+    // 统一做一次字符串转换
+    const conversionTomID = tomId ? '' + tomId : 'NULL';
+    if (conversionTomID === '101') { // 图片
+      newData.imageData = item.body;
+    } else if (conversionTomID === '102') { // 音频
+      newData.audioData = item.body;
+    } else if (conversionTomID === '103') { // 视频
+      newData.videoData = item.body;
+    } else if (conversionTomID === '104') { // 商品
+      newData.goodsData = item.body;
+    } else if (conversionTomID === '105') { // 问答
+      newData.qaData = item.body;
+    } else if (conversionTomID === '106') { // 红包
+      newData.redPacketData = item.body;
+    } else if (conversionTomID === '107') { // 悬赏
+      newData.rewardData = item.body;
+    } else if (conversionTomID === '108') { // 附件
+      newData.fileData = item.body;
+    } else if (conversionTomID === '109') {
+      newData.voteData = item.body;
+    }else if (conversionTomID === '10002') {
+      newData.iframeData = item.body;
+    }
+  });
+  if (val === 'video' && newData.videoData && newData.videoData.status === 0 || val === 'video' && newData.videoData && newData.videoData.status === 2) {
+    displayVal = true;
+  } else if (val === 'video') {
+    displayVal = false;
+  }
+  if (val === 'videos' && newData.videoData) {
+    displayVal = true;
+  }
+  if (val === 'videoStatus' && newData.videoData && newData.videoData.status === 0) {
+    displayVal = true;
+  }
+  if (val === 'videoStatusTwo' && newData.videoData && newData.videoData.status === 2) {
+    displayVal = true;
+  }
+  if (val === 'audio' && newData.audioData) {
+    displayVal = newData.audioData;
+  }
+  if (val === 'images' && newData.imageData && newData.imageData.length > 0) {
+    displayVal = newData.imageData;
+  }
+  if (val === 'attachments' && newData.fileData && newData.fileData.length > 0) {
+    displayVal = newData.fileData;
+  }
+  if (val === 'vote' && newData.voteData && newData.voteData.length > 0) {
+    displayVal = newData.voteData;
+  }
+  if (val === 'iframe' && newData.iframeData) {
+    displayVal = newData.iframeData;
+  }
+  return displayVal;
+}
 
+appCommonH.convertEmoticon = function (text, emojis) {
+  if (!text) return;
+  const regexp = /:([A-Za-z\u017F\u212A]{2,20}):/gim;
+  return text.replace(regexp, match => {
+    return match.replace(regexp, (content, value, text) => {
+      const { code, url, isAllow } = handleEmoji(value, emojis);
+      if (isAllow) {
+        return `<img style="display:inline-block;vertical-align:top" src="${url}" alt="${code}" class="qq-emotion">`;
+      }
+      return `:${value}:`
+    });
+  });
+}
+
+const handleEmoji = (value, emojis) => {
+  const url = window.location.hostname === 'localhost' ? 'https://bbsv3.techo.chat' : window.location.origin;
+  if (!emojis || emojis.length <= 0) {
+    return {
+      code: value,
+      url: `${url}/emoji/qq/${value}.gif`,
+      isAllow: true
+    }
+  }
+  const emoji = emojis.filter(item => item.code === `:${value}:`).map(item => {
+    return {
+      code: value,
+      url: item.url,
+      isAllow: true
+    }
+  })
+
+  if (emoji && emoji.length > 0) {
+    return emoji[0]
+  } else {
+    return { isAllow: false }
+  }
+  
+}
 
 if(!Vue.prototype.appCommonH) {
 	Vue.prototype.appCommonH = appCommonH;

@@ -48,29 +48,29 @@
       <ContArrange
 				class="report-manage-content__table"
 				v-for="items in reportList"
-				:key="items._data.id"
-				:establish="!items.user ? '该用户被删除' : items.user._data.username"
-				:userId="!items.user?'该用户被删除':items.user._data.id"
-				:time="formatDate(items._data.created_at)"
-				:type="getType(items._data.type)"
+				:key="items.report.id"
+				:establish="!items.user.userName ? '该用户被删除' : items.user.userName"
+				:userId="!items.user.pid?'该用户被删除':items.user.pid"
+				:time="formatDate(items.report.createdAt)"
+				:type="getType(items.report.type)"
 			>
         <div class="report-manage-content__table-side" slot="side">
           <el-checkbox
             v-model="checkedReport"
-             :label="items._data.id"
+             :label="items.report.id"
             @change="handleCheckedCitiesChange()"
           ></el-checkbox>
         </div>
         <div class="report-manage-content__table-main" slot="main">
           <p>
 						页面地址：
-						<a :href="getUrl(items.user._data.id, items._data.thread_id, items._data.post_id).href" style="color: #3E4043;" target="_blank">
-							{{getUrl(items.user._data.id, items._data.thread_id, items._data.post_id).url}}
+						<a :href="getUrl(items.user.pid, items.report.threadId, items.report.postId).href" style="color: #3E4043;" target="_blank">
+							{{getUrl(items.user.pid, items.report.threadId, items.report.postId).url}}
 						</a>
 						</p>
-          <p>举报时间：{{formatDate(items._data.updated_at)}}</p>
+          <p>举报时间：{{formatDate(items.report.updatedAt)}}</p>
           <p>举报理由：</p>
-          <p>{{items._data.reason}}</p>
+          <p>{{items.report.reason}}</p>
         </div>
         <div class="report-manage-content__table-footer" slot="footer">
             <el-popover
@@ -91,7 +91,7 @@
                   type="primary"
                   size="mini"
                   @click="
-                    deleteOperation(1, items._data.id);
+                    deleteOperation(1, items.report.id);
                     closeDelet(`popover-${index}`)"
                   >确定</el-button
                 >

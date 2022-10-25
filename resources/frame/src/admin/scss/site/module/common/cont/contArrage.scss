@@ -47,7 +47,6 @@
         display: flex;
         align-items:center;
         padding: 18PX 20PX;
-        //font-size: 0;
 
         .rt-box{
           color: $descColor;
@@ -82,9 +81,7 @@
             color: $descColor;
           }
           .themeName{
-            position: absolute;
-            //width: calc(100% - 140PX);
-            //left: 111PX;
+            line-height: 18PX;
           }
           &-title-icon{
             vertical-align: middle;
@@ -94,8 +91,6 @@
       }
 
       &-long-text{
-        // display: flex;
-        // justify-content: space-between;
         border-bottom: 1PX solid $borderColor;
         padding: 15PX 20PX;
       }
@@ -162,5 +157,20 @@
     }
 
   }
-
+  .cont-arrange-span {
+    line-height: 18PX;
+  }
+  .cont-arrange-title {
+    line-height: 18PX;
+  }
+  .cont-arrange-p {
+    a {
+      line-height: 18PX;
+    }
+  }
+  .cont-arrange__rt-main-header__release {
+    display: flex;
+    overflow: hidden;
+    flex-wrap: nowrap;
+  }
 }

@@ -21,23 +21,30 @@
         </el-table-column>
         <el-table-column prop="address" label="操作" width="180">
           <template slot-scope="scope">
-            <!-- <div> -->
-            <el-button
-              v-if="scope.row.setFlag && scope.row.type !== 'img' && scope.row.type !=='text' && scope.row.type !=='name'"
-              size="mini"
-              @click="configClick(scope.row.type)"
-            >配置</el-button>
-            <!-- </div> -->
-            <el-button
-              v-if="scope.row.status"
-              @click.native.prevent="loginSetting(scope.$index,scope.row.type,'0')"
-              size="mini"
-            >关闭</el-button>
-            <el-button
-              v-else
-              size="mini"
-              @click.native.prevent="loginSetting(scope.$index,scope.row.type,'1')"
-            >开启</el-button>
+            <div v-if="scope.row.setOpen">
+              <el-button
+                v-if="scope.row.setFlag && scope.row.type !== 'img' && scope.row.type !=='text' && scope.row.type !=='name'"
+                size="mini"
+                @click="configClick(scope.row.type)"
+              >配置</el-button>
+              <el-button
+                v-if="scope.row.status"
+                @click.native.prevent="loginSetting(scope.$index,scope.row.type,'0')"
+                size="mini"
+              >关闭</el-button>
+              <el-button
+                v-else
+                size="mini"
+                @click.native.prevent="loginSetting(scope.$index,scope.row.type,'1')"
+              >开启</el-button>
+            </div>
+            <div v-else>
+              <el-button
+                v-if="scope.row.setFlag && scope.row.type !== 'img' && scope.row.type !=='text' && scope.row.type !=='name'"
+                size="mini"
+                @click="configClick(scope.row.type)"
+              >配置</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>

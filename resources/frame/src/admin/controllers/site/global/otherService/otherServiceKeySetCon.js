@@ -18,14 +18,19 @@ export default {
     loadStatus(){
       //初始化
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{}
       }).then(data=>{
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
-          this.key = data.data.attributes.lbs.qq_lbs_key;
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
+          const {Data: forumData} = data;
+          this.key = forumData.lbs.qqLbsKey;
         }
       })
     },
@@ -38,16 +43,14 @@ export default {
         return;
       }
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-               "attributes":{
-                "key":"qq_lbs_key",
-                "value":this.key,
-                "tag": 'lbs'
-               }
+              "key":"qq_lbs_key",
+              "value":this.key,
+              "tag": 'lbs'
             },
            ]
         }
@@ -55,6 +58,10 @@ export default {
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({
             message: '提交成功',
             type: 'success'

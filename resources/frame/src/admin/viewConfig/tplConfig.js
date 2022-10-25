@@ -53,17 +53,6 @@ export default {
               alias: "站点信息"
             }
           },
-          "site-theme": {
-            comLoad: function (resolve) {
-              require(["../view/site/global/siteSet/siteThemeView"], resolve);
-            },
-            metaInfo: {
-              title: "站点设置",
-              name: "siteSet",
-              attribution: "全局",
-              alias: "主题设置"
-            }
-          },
           "site-function-set": {
             comLoad: function (resolve) {
               require(["../view/site/global/siteSet/siteFunctionSetView"], resolve);
@@ -84,6 +73,50 @@ export default {
               name: "siteSet",
               attribution: "全局",
               alias: "首页数据设置"
+            }
+          },
+          "site-data-rules": {
+            comLoad: function (resolve) {
+              require(["../view/site/global/siteSet/siteDataRulesView"], resolve);
+            },
+            metaInfo: {
+              title: "站点设置",
+              name: "siteSet",
+              attribution: "全局",
+              alias: "首页数据设置"
+            }
+          },
+          "site-seo-set": {
+            comLoad: function (resolve) {
+              require(["../view/site/global/siteSet/siteSeoSetView"], resolve);
+            },
+            metaInfo: {
+              title: "站点设置",
+              name: "siteSet",
+              attribution: "全局",
+              alias: "SEO设置"
+            }
+          },
+          "site-ssr-set": {
+            comLoad: function (resolve) {
+              require(["../view/site/global/siteSet/siteSsrSetView"], resolve);
+            },
+            metaInfo: {
+              title: "站点设置",
+              name: "siteSet",
+              attribution: "全局",
+              alias: "SEO设置"
+            }
+          },
+          "site-ssr-explain": {
+            comLoad: function (resolve) {
+              require(["../view/site/global/siteSet/siteSsrExplainView"], resolve);
+            },
+            metaInfo: {
+              title: "站点设置",
+              name: "siteSet",
+              attribution: "全局",
+              alias: "SEO设置"
             }
           },
           // "operation-log": {
@@ -235,6 +268,30 @@ export default {
               attribution: "全局",
             }
           },
+          "other-service-content": {
+            comLoad: function (resolve) {
+              require([
+                "../view/site/global/otherService/otherServiceContent"
+              ], resolve);
+            },
+            metaInfo: {
+              title: "其他服务设置",
+              name: "otherServiceSet",
+              attribution: "全局",
+            }
+          },
+          "other-service-wechat-shop": {
+            comLoad: function (resolve) {
+              require([
+                "../view/site/global/otherService/otherServiceWechatShop"
+              ], resolve);
+            },
+            metaInfo: {
+              title: "微信小商店",
+              name: "otherServiceSet",
+              attribution: "全局",
+            }
+          },
           "system-notice": {
             comLoad: function (resolve) {
               require([
@@ -332,6 +389,30 @@ export default {
               attribution: "全局"
             }
           },
+          "tencent-cloud-config/cdn": {
+            comLoad: function (resolve) {
+              require([
+                "../view/site/global/tencentCloudConfig/tencentCloudConfigCdnView"
+              ], resolve);
+            },
+            metaInfo: {
+              title: "腾讯云设置",
+              name: "tencentCloudSet",
+              attribution: "全局"
+            }
+          },
+          "tencent-cloud-config/server": {
+            comLoad: function (resolve) {
+              require([
+                "../view/site/global/tencentCloudConfig/tencentCloudServerView"
+              ], resolve);
+            },
+            metaInfo: {
+              title: "腾讯云设置",
+              name: "tencentCloudSet",
+              attribution: "全局"
+            }
+          },
           "annex-set": {
             comLoad: function (resolve) {
               require(["../view/site/global/annexSetView"], resolve);
@@ -340,6 +421,18 @@ export default {
               title: "附件设置",
               name: "annexSet",
               attribution: "全局"
+            }
+          },
+          "pulgin-unit": {
+            comLoad: function (resolve) {
+              require([
+                "../view/site/global/pluginUnitView"
+              ], resolve);
+            },
+            metaInfo: {
+              title: "插件设置",
+              name: "pluginUnit",
+              attribution: "全局",
             }
           },
           "water-mark-set": {
@@ -410,7 +503,6 @@ export default {
           //内容分类
           "cont-class": {
             comLoad: function (resolve) {
-              // require(["../view/site/cont/contClassView"], resolve);
               require(["../view/site/cont/contClassPayView"], resolve);
             },
             metaInfo: {
@@ -669,8 +761,7 @@ export default {
           },
           "rol-permission": {
             comLoad: function (resolve) {
-              // require(["../view/site/user/userRol/rolPermissionView"], resolve);
-              require(["../view/site/user/userRol/rolPermissionPayView"], resolve);
+              require(["../view/site/user/userRol/rolPermissionView"], resolve);
             },
             metaInfo: {
               title: "用户角色",
@@ -723,9 +814,9 @@ export default {
     } else {
       this.getUserInfo(tokenId)
         .then(res => {
-          groupId = res.readdata.groups[0]._data.id;
-          webDb.setLItem("username", res.data.attributes.username);
-          if (groupId === "1") {
+          groupId = res.Data.group.pid;
+          webDb.setLItem("username", res.Data.username);
+          if (groupId === 1) {
             if (to.path == "/admin/login") {
               next("/admin");
               return;
@@ -751,11 +842,12 @@ export default {
   },
   getUserInfo(id) {
     return appFetch({
-      url: "users",
+      url: "user_get_v3",
       method: "get",
-      splice: "/" + id,
+      // splice: "/" + id,
       data: {
-        include: ["groups"]
+        userId: id
+        // include: ["groups"]
       }
     })
       .then(res => {

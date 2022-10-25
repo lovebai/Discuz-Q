@@ -9,6 +9,7 @@ export default {
   data:function () {
     return {
       categoriesList: [],           //分类列表
+      alternateLength:0,    //数据长度备份
       categoriesListLength:'',      //分类列表长度
       createCategoriesStatus:false, //添加分类状态
       deleteStatus:true,
@@ -17,20 +18,24 @@ export default {
       delLoading:false,             //删除按钮状态
       subLoading:false,             //提交按钮状态
       showClass:false,              //分类权限显示隐藏
-      dialogVisible: false
+      dialogVisible: false,
+      classcCnfirm: false
     };
   },
 
   methods:{
     // 新增。当前父类添加二级子类，携带父级id
     childAdd(row){
-      row.children.push({
-        id: '',
-        name: '',
-        description: '',
-        sort: '',
-        parentid: row.id
-      });
+      const num = this.alternateLength.filter(v => v.pid === row.id);
+      if (row.children.length <= num[0].children.length) {
+        row.children.push({
+          id: '',
+          name: '',
+          description: '',
+          sort: '',
+          parentid: row.id
+        });
+      }
     },
     
     // 新增。删除带id子项，无id的等等提交刷新列表
@@ -48,7 +53,7 @@ export default {
     },
 
     // 新增。确认子类
-    submitChildClick(row){
+    submitChildClick(row, scope){
       if(!row.name){
         this.$message.warning('名称不能为空！')
         return
@@ -57,13 +62,13 @@ export default {
         this.$message.warning('修改子类，请点击页面底部的提交按钮')
         return
       }
+      this.classcCnfirm = true;
       this.createCategories([row]).then(()=>{
         this.getCategories();
       })
     },
 
     addClick() {
-      console.log('12344');
     },
     handleSelectionChange(val) {
       this.multipleSelection = val;
@@ -112,28 +117,22 @@ export default {
         let data = [];
         this.categoriesList.forEach((item)=>{
           data.push({
-            'type':"categories",
             'id':item.id,
-            "attributes": {
-              "name": item.name,
-              "description": item.description,
-              "parentid":item.parentid,
-              "sort": item.sort
-            }
+            "name": item.name,
+            "description": item.description,
+            "parentId":item.parentid,
+            "sort": item.sort
           });
           item.children && item.children.forEach(item_child=>{
             if (!item_child.id){
               return
             }
             data.push({
-              'type':"categories",
               'id':item_child.id,
-              "attributes": {
-                "name": item_child.name,
-                "description": item_child.description,
-                "sort": item_child.sort,
-                "parentid": item_child.parentid
-              }
+              "name": item_child.name,
+              "description": item_child.description,
+              "sort": item_child.sort,
+              "parentId": item_child.parentid
             })
           });
         });
@@ -174,7 +173,6 @@ export default {
           });
         }
       }else{
-        // console.log(this.categoriesList.indexOf(row));
         this.categoriesList.splice(this.categoriesList.indexOf(row),1);
       }
     },
@@ -205,23 +203,45 @@ export default {
     * */
     getCategories(){
       this.appFetch({
-        url:'categories',
+        url:'categories_get_v3',
         method:'get',
         data:{}
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          this.categoriesListLength = res.data.length;
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          this.classcCnfirm = false;
+          const {Data: data} = res
+          this.categoriesListLength = data.length;
           this.categoriesList = [];
-          res.data.forEach((item, index) => {
+          this.alternateLength = data;
+          data.forEach((item, index) => {
+            let children = [];
+            item.children.forEach(citem => {
+              children.push({
+                canCreateThread: citem.canCreateThread,
+                description: citem.description,
+                icon: citem.icon,
+                name: citem.name,
+                parentid: citem.parentid,
+                id: citem.pid,
+                property: citem.property,
+                searchIds: citem.searchIds,
+                sort: citem.sort,
+                threadCount: citem.threadCount
+              })
+            })
             this.categoriesList.push({
-              name: item.attributes.name,
-              id: item.id,
-              description: item.attributes.description,
-              sort: item.attributes.sort,
-              parentid: item.attributes.parentid,
-              children:item.attributes.children || [],
+              name: item.name,
+              id: item.pid,
+              description: item.description,
+              sort: item.sort,
+              parentid: item.parentid,
+              children: children,
               isShow:true, // 本地显示需要，显示父类操作
               idx:index, // 本地删除需要，记录父类下标
             })
@@ -233,45 +253,45 @@ export default {
     },
     deleteCategories(id){
       return this.appFetch({
-        url:'categoriesDelete',
-        method:'delete',
-        splice:'/'+id
+        url:'categories_delete_v3',
+        method:'post',
+        data:{
+          "id": id
+        }
       }).then(res=>{
         this.subLoading = false;
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          if (!res.meta) {
-            this.$message({
-              message: '操作成功',
-              type: 'success'
-            });
-          } else {
-            this.$message.error('操作失败！');
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          this.$message({
+            message: '操作成功',
+            type: 'success'
+          });
         }
       }).catch(err=>{
       })
     },
     batchDeleteCategories(id){
       return this.appFetch({
-        url:'categoriesBatchDelete',
-        method:'delete',
-        splice:'/'+id
+        url:'categories_delete_v3',
+        method:'post',
+        data:{
+          "id": id
+        }
       }).then(res=>{
         this.delLoading = false;
-        if (res.meta){
-          res.meta.forEach((item,index)=>{
-            setTimeout(()=>{
-              this.$message.error(item.code)
-            },(index+1) * 500);
-          });
-        }else {
-          this.$message({
-            message: '操作成功',
-            type: 'success'
-          });
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
         }
+        this.$message({
+          message: '操作成功',
+          type: 'success'
+        });
       }).catch(err=>{
       })
     },
@@ -279,68 +299,49 @@ export default {
       let datas = [];
       data.forEach((item)=>{
         datas.push({
-          "type": "categories",
-          "attributes": {
-            "name": item.name,
-            "description": item.description,
-            "sort": item.sort,
-            "parentid":item.parentid
-          }
-        },)
+          "name": item.name,
+          "description": item.description,
+          "sort": item.sort,
+          "parentId":item.parentid
+        })
       });
 
       return  this.appFetch({
-                url:'createBatchCategories',     //批量创建分类
+                url:'categories_create_v3',     //批量创建分类
                 method:'post',
                 data:{
                   "data": datas
                 }
               }).then(res=>{
                 this.subLoading = false;
-                if (res.meta){
-                  res.meta.forEach((item,index)=>{
-                    setTimeout(()=>{
-                      this.$message.error(item.message.name[0])
-                    },(index+1) * 500);
-                  });
-                }else {
-                  this.$message({
-                    message: '操作成功',
-                    type: 'success'
-                  });
+                if (res.Code !== 0) {
+                  this.$message.error(res.Message);
+                  return
                 }
+                this.$message({
+                  message: '操作成功',
+                  type: 'success'
+                });
               }).catch(err=>{
               })
     },
     batchUpdateCategories(data) {
       return this.appFetch({
-        url: 'categoriesBatchUpdate',      //批量修改分类
-        method: 'patch',
+        url: 'categories_update_v3',      //批量修改分类
+        method: 'post',
         data: {
           data
         }
       }).then(res => {
         this.subLoading = false;
-        if (res.meta) {
-          // TODO 优化提示
-          let errors = {
-            'permission_denied': '权限不足！',
-          }
-          res.meta.forEach((item, index) => {
-            setTimeout(() => {
-              if (typeof item.message === 'string') {
-                this.$message.error(errors[item.message] ? errors[item.message] : item.message)
-              } else {
-                this.$message.error(item.message.name[0])
-              }
-            }, (index + 1) * 500);
-          });
-        } else {
-          this.$message({
-            message: '操作成功',
-            type: 'success'
-          });
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
         }
+        this.$message({
+          message: '操作成功',
+          type: 'success'
+        });
       }).catch(err => {
         console.log(err);
       })

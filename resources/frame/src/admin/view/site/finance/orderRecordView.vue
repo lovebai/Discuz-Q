@@ -22,6 +22,7 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
           :picker-options="pickerOptions"
+          @change="handleTimeChange"
         >
         </el-date-picker>
       </div>
@@ -56,6 +57,19 @@
           </el-option>
         </el-select>
       </div>
+      
+      <div class="order-record__search-condition">
+        <span class="order-record__search-condition__title">订单类型：</span>
+        <el-select v-model="orderValue" clearable placeholder="请选择">
+          <el-option
+            v-for="item in orderType"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          >
+          </el-option>
+        </el-select>
+      </div>
 
       <div class="order-record__search-condition">
         <span class="order-record__search-condition__title">收入方：</span>
@@ -75,17 +89,17 @@
     <!-- 订单记录列表 -->
     <div class="order-record-table">
       <el-table :data="tableData" style="width: 100%">
-        <el-table-column prop="_data.order_sn" label="订单号" min-width="110">
+        <el-table-column prop="orderSn" label="订单号" min-width="110">
         </el-table-column>
 
-        <el-table-column prop="user._data.username" label="发起方">
+        <el-table-column prop="nickname" label="发起方">
         </el-table-column>
 
-        <el-table-column prop="payee._data.username" label="收入方">
+        <el-table-column prop="payeeNickname" label="收入方">
         </el-table-column>
 
         <el-table-column
-          prop="thread.firstPost._data.title"
+          prop="thread.title"
           show-overflow-tooltip
           label="商品名称"
           min-width="150"
@@ -93,68 +107,86 @@
           <template slot-scope="scope">
             <span
               :class="scope.row.thread ? 'cursor-pointer' : ''"
-              v-if="scope.row.thread && (scope.row._data.type === 2 || scope.row._data.type === 3 || scope.row._data.type === 5 || scope.row._data.type === 6 || scope.row._data.type === 7 || scope.row._data.type === 20 || scope.row._data.type === 21)" @click="
-                viewClick(scope.row.thread ? scope.row.thread._data.id : '')">
-              {{ scope.row.thread._data.title }}
+              v-if="
+                scope.row.thread && (
+                  scope.row.type === 2 ||
+                  scope.row.type === 3 ||
+                  scope.row.type === 5 ||
+                  scope.row.type === 6 ||
+                  scope.row.type === 7 ||
+                  scope.row.type === 8 ||
+                  scope.row.type === 9 ||
+                  scope.row.type === 10 ||
+                  scope.row.type === 11
+                )"
+                @click="viewClick(scope.row.thread ? scope.row.thread.threadId : '')"
+            >
+              {{ scope.row.thread.title }}
             </span>
-            <span v-else-if="scope.row._data.type === 1" @click="viewClick('')">
+            <span v-else-if="scope.row.type === 1" @click="viewClick('')">
               注册付费
             </span>
-            <span v-else-if="scope.row._data.type === 4" @click="viewClick('')">
-              {{ scope.row.group ? scope.row.group._data.name : '' }}用户组
+            <span v-else-if="scope.row.type === 4" @click="viewClick('')">
+              {{ scope.row.group ? scope.row.group.name : '' }}用户组
             </span>
           </template>
         </el-table-column>
 
         <el-table-column
-          prop="thread.firstPost._data.content"
+          prop="thread.content"
           show-overflow-tooltip
           label="类型"
           min-width="80"
         >
           <template slot-scope="scope">
-            <span v-if="scope.row._data.type === 1">
-              注册
+            <span v-if="scope.row.type === 1">
+              注册(站点付费加入)
             </span>
-            <span v-else-if="scope.row._data.type === 2">
+            <span v-else-if="scope.row.type === 2">
               打赏
             </span>
-            <span v-else-if="scope.row._data.type === 3">
-              付费主题
+            <span v-else-if="scope.row.type === 3">
+              购买主题
             </span>
-            <span v-else-if="scope.row._data.type === 4">
-              付费用户组
+            <span v-else-if="scope.row.type === 4">
+              购买权限组
             </span>
-            <span v-else-if="scope.row._data.type === 5">
-              问答提问支付
+            <span v-else-if="scope.row.type === 5">
+              付费提问
             </span>
-            <span v-else-if="scope.row._data.type === 6">
+            <span v-else-if="scope.row.type === 6">
               问答围观付费
             </span>
-            <span v-else-if="scope.row._data.type === 7">
-              付费附件
+            <span v-else-if="scope.row.type === 7">
+              购买附件
             </span>
-            <span v-else-if="scope.row._data.type === 20">
-              文字帖红包
+            <span v-else-if="scope.row.type === 8">
+              站点付费(续费)
             </span>
-            <span v-else-if="scope.row._data.type === 21">
-              长文帖红包
+            <span v-else-if="scope.row.type === 9">
+              红包
+            </span>
+            <span v-else-if="scope.row.type === 10">
+              悬赏
+            </span>
+            <span v-else-if="scope.row.type === 11">
+              合并订单(红包+悬赏合并支付)
             </span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="_data.amount" label="金额" width="100">
+        <el-table-column prop="amount" label="金额" width="100">
         </el-table-column>
 
-        <el-table-column prop="_data.created_at" label="订单时间">
+        <el-table-column prop="createdAt" label="订单时间">
           <template slot-scope="scope">{{
-            formatDate(scope.row._data.created_at)
+            formatDate(scope.row.createdAt)
           }}</template>
         </el-table-column>
 
         <el-table-column label="状态" width="100">
           <template slot-scope="scope">{{
-            cashStatus(scope.row._data.status)
+            cashStatus(scope.row.status)
           }}</template>
         </el-table-column>
       </el-table>

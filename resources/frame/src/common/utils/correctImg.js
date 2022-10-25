@@ -2,7 +2,6 @@ import Exif from 'exif-js';
 
 export async function correctImg(file) {
     const or = await getImageTag(file, 'Orientation');
-    // console.log(or,'or');
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -10,7 +9,6 @@ export async function correctImg(file) {
         reader.onloadend = function (e) {
 
             const result = e.target.result;
-            // console.log(result)
             const img = new Image();
             img.src = result;
             img.onload = function () {

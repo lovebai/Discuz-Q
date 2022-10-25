@@ -105,17 +105,19 @@ export default {
     // 获取首页站点数据统计
     statistic() {
       this.appFetch({
-        url: "statisticPanel",
+        url: "firstChart_get_v3",
         method: "get",
       })
         .then((res) => {
           if (res && res.errors) return this.$message.error(res.errors[0].code);
-          if (res && res.readdata) {
-            const data = res.readdata._data.overData.over || {};
-            this.dataList.forEach((item) => {
-              item.num = data[item.key];
-            });
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          const data = res.Data.overData.over || {};
+          this.dataList.forEach((item) => {
+            item.num = data[item.key];
+          });
         })
         .catch((err) => {
           console.log(err);
@@ -143,7 +145,7 @@ export default {
         const startTime = this.$dayjs().subtract(6, "day").format("YYYY-MM-DD");
         const endTime = this.$dayjs().format("YYYY-MM-DD");
         data = {
-          "filter[type]": this.selectedMode + 1,
+          "type": this.selectedMode + 1,
           "filter[createdAtBegin]": this.selectTime[0] || startTime,
           "filter[createdAtEnd]": this.selectTime[1] || endTime,
         };
@@ -154,7 +156,7 @@ export default {
         const startTime = this.$dayjs().startOf("week").format("YYYY-MM-DD");
         const endTime = this.$dayjs().endOf("week").format("YYYY-MM-DD");
         data = {
-          "filter[type]": this.selectedMode + 1,
+          "type": this.selectedMode + 1,
           "filter[createdAtBegin]": this.selectTime[0] || startTime,
           "filter[createdAtEnd]": this.selectTime[1] || endTime,
         };
@@ -171,22 +173,25 @@ export default {
           endTime = this.$dayjs().endOf("month").format("YYYY-MM-DD");
         }
         data = {
-          "filter[type]": this.selectedMode + 1,
+          "type": this.selectedMode + 1,
           "filter[createdAtBegin]": startTime,
           "filter[createdAtEnd]": endTime,
         };
       }
 
       this.appFetch({
-        url: "statisticPanel",
+        url: "firstChart_get_v3",
         method: "get",
         data: data,
       })
         .then((res) => {
           if (res && res.errors) return this.$message.error(res.errors[0].code);
-          this.noData = res && res.readdata == "" ? true : false;
-          if (res && res.readdata) {
-            const data = res.readdata._data;
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          this.noData = res && res.Data == "" ? true : false;
+            const { Data: data } = res;
             let date = []; // 日期
             let threadData = []; // 每日发帖
             let postData = []; // 每日回帖
@@ -223,7 +228,6 @@ export default {
               activeUserData,
               joinUserData
             );
-          }
         })
         .catch((err) => {
           console.log(err);

@@ -23,7 +23,7 @@ input[type="number"]{
   公共样式：表情样式
 */
 .qq-emotion{
-  width: 20PX;
+  width: 20PX !important;
   height: 20PX;
   vertical-align: text-bottom;
   display:inline-block;

@@ -20,43 +20,57 @@
               width="55">
             </el-table-column>
 
-            <el-table-column prop="_data.id" label="编号" width="80"> </el-table-column>
+            <el-table-column prop="userId" label="编号" width="80"> </el-table-column>
             <el-table-column label="头像" width="60" align="center">
               <template slot-scope="scope" class="image-slot">
-                <el-image style="width: 32px; height: 32px" :src="scope.row._data.avatarUrl ? scope.row._data.avatarUrl : '/static-admin/images/noavatar.gif'" lazy></el-image>
+                <el-image style="width: 32px; height: 32px" :src="scope.row.avatarUrl ? scope.row.avatarUrl : '/static-admin/images/noavatar.gif'" lazy></el-image>
               </template>
             </el-table-column>
 
             <el-table-column
-              prop="_data.username"
+              prop="username"
               label="用户名"
               min-width="50"
               >
             </el-table-column>
-
+            
             <el-table-column
-              prop="_data.threadCount"
-              label="主题数">
+              prop="nickname"
+              label="用户昵称"
+              min-width="50"
+            >
             </el-table-column>
 
             <el-table-column
-              prop="groups[0]._data.name"
+              prop="threadCount"
+              label="主题数"
+              min-width="50"
+            >
+            </el-table-column>
+
+            <el-table-column
+              prop="groupName"
               label="用户组">
             </el-table-column>
 
-            <el-table-column label="是否已付费"> 
+            <el-table-column label="是否已付费">
               <template slot-scope="scope">
-                <el-tag :type="$dayjs().isSameOrBefore($dayjs(scope.row._data.expiredAt)) ? 'success' : 'info'">{{ $dayjs().isSameOrBefore($dayjs(scope.row._data.expiredAt)) ? "是" : "否" }}</el-tag>
+                <el-tag :type="scope.row.paid ? 'success' : 'info'">{{ scope.row.paid ? "是" : "否" }}</el-tag>
               </template>
 
+            </el-table-column>
+            
+            <el-table-column
+              prop="inviteUsersNumber"
+              label="邀请注册">
             </el-table-column>
 
             <el-table-column
               label="">
               <template slot-scope="scope">
-                <el-button type="text" @click="$router.push({path:'/admin/user-details', query: {id: scope.row._data.id}})">详情</el-button>
-                <el-button type="text" @click="$router.push({path:'/admin/wallet', query: {id: scope.row._data.id}})">钱包</el-button>
-                <el-button type="text" @click="handleDisable(scope)" :disabled="scope.row._data.status === 1">禁用</el-button>
+                <el-button type="text" @click="$router.push({path:'/admin/user-details', query: {id: scope.row.userId}})">详情</el-button>
+                <el-button type="text" @click="$router.push({path:'/admin/wallet', query: {id: scope.row.userId}})">钱包</el-button>
+                <el-button type="text" @click="handleDisable(scope)" :disabled="scope.row.status === 1">禁用</el-button>
               </template>
             </el-table-column>
 

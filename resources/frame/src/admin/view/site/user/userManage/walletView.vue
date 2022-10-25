@@ -1,18 +1,18 @@
 <template>
   <div class="wallet-box">
     <div class="details-wallet-header">
-      <p class="details-wallet-header__name">{{walletInfo.user._data.username}}（UID：{{walletInfo._data.id}}）</p>
+      <p class="details-wallet-header__name">{{walletInfo.username}}（UID：{{walletInfo.userId}}）</p>
       <i class="details-wallet-header__i"></i>
       <span @click="$router.push({path:'/admin/user-details', query: query})" >详情</span>
       <span class="details-wallet-header__wallet">钱包</span>
     </div>
 
     <Card header="钱包可用余额：">
-      <p>{{walletInfo._data.available_amount}}元</p>
+      <p>{{walletInfo.availableAmount}}元</p>
     </Card>
 
     <Card header="钱包冻结金额：">
-      <p>{{walletInfo._data.freeze_amount}}元</p>
+      <p>{{walletInfo.freezeAmount}}元</p>
     </Card>
 
     <Card header="钱包余额操作：">
@@ -43,8 +43,8 @@
     </Card>
 
     <Card header="钱包状态：">
-      <el-radio v-model="walletInfo._data.wallet_status" :label="0">正常</el-radio>
-      <el-radio v-model="walletInfo._data.wallet_status" :label="1">冻结提现</el-radio>
+      <el-radio v-model="walletInfo.walletStatus" :label="0">正常</el-radio>
+      <el-radio v-model="walletInfo.walletStatus" :label="1">冻结提现</el-radio>
     </Card>
 
     <Card class="footer-btn">

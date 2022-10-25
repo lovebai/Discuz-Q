@@ -13,7 +13,7 @@ export default {
       options: [],
       optionsList: [],
       imageUrl: "",
-      userRole: [],
+      userRole: '',
       userInfo: {},
       newPassword: "",
       wechatNickName: "",
@@ -27,6 +27,7 @@ export default {
       realname: "", //实名认证是否显示
       expired_at: "", // 选择过期时间
       userName: "",   // 修改用户名
+      nickName: "",   // 修改用户昵称
       optionsStatus: [
         {
           value: 0,
@@ -55,14 +56,31 @@ export default {
       expandUsers:[],
       expandDatas: [],
       exends: [],
+      groupList: [],
+      userGroupId: '',
+      userInviteList: [],
+      pageLimit: 10,
+      pageNum: 1,
+      total: 0,
     };
   },
-
+  watch: {
+    $route: {
+      handler() {
+        this.query = this.$route.query;
+        this.getUserDetail();
+        this.getUserList();
+        this.expandInformation();
+        this.usersInviteList();
+      }
+    }
+  },
   created() {
     this.query = this.$route.query;
     this.getUserDetail();
     this.getUserList();
     this.expandInformation();
+    this.usersInviteList();
   },
 
   methods: {
@@ -71,29 +89,29 @@ export default {
         var userId = browserDb.getLItem("tokenId");
         const response = await this.appFetch({
           method: "get",
-          url: "users",
-          splice: `/${this.query.id}`,
+          url: "user_get_v3",
+          // splice: `/${this.query.id}`,
           data: {
-            include: "wechat,groups"
+            userId: this.query.id
           }
         });
-        if (response.errors) {
-          this.$message.error(response.errors[0].code);
+        if (response.Code || (response.Code && response.Code !== 0)) {
+          this.$message.error(response.Message);
         } else {
-          this.userInfo = response.readdata._data;
+          this.userInfo = response.Data;
           this.imageUrl = this.userInfo.avatarUrl;
           this.userName = this.userInfo.username;
+          this.nickName = this.userInfo.nickname;
           this.expired_at = this.userInfo.expiredAt && this.$dayjs(this.userInfo.expiredAt).format("YYYY-MM-DD HH:mm:ss");
           if (this.imageUrl != "" && this.imageUrl != null) {
             this.deleBtn = true;
           }
           this.reasonsForDisable = this.userInfo.banReason;
-          this.userRole = response.readdata.groups.map(v => {
-            return v._data.id;
-          });
-          if (response.readdata.wechat) {
-            this.wechatNickName = response.readdata.wechat._data.nickname;
-            this.sex = response.readdata.wechat._data.sex;
+          this.userRole = response.Data.group.pid;
+          this.userGroupId = response.Data.group.pid;
+          if (response.isBindWechat) {
+            this.wechatNickName = response.Data.nickname;
+            this.sex = response.Data.sex;
           }
           if (userId == this.userInfo.id) {
             // this.disabled = false;
@@ -111,15 +129,40 @@ export default {
       } catch (err) {}
     },
 
+    // 推广邀请用户列表
+    usersInviteList() {
+      this.appFetch({
+        url: 'users_invite_get_v3',
+        method: 'get',
+        data: {
+          userId: this.query.id,
+        },
+      })
+      .then(res => {
+        if (res.errors) {
+          this.$message.error(res.errors[0].code);
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          this.userInviteList = res.Data.pageData;
+        }
+      })
+    },
     // 扩展信息查询
     expandInformation() {
       this.appFetch({
-        url: 'signInFields',
+        url: 'signinfields_get_v3',
         method: 'get',
         data: {},
       }).then(res => {
-        res.readdata.forEach(item => {
-          if (item._data.status == 1) {
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
+        }
+        res.Data.forEach(item => {
+          if (item.status == 1) {
             this.expandDatas.push(item);
           }
         })
@@ -131,17 +174,23 @@ export default {
     userExpandInformation() {
       let userId = this.query.id;
       this.appFetch({
-        url: 'userSigninfields',
+        url: 'user_signinfields_get_v3',
         method: 'get',
-        splice: `/${userId}`,
+        data: {
+          uid: userId
+        }
       }).then((res) => {
-        if (res.readdata && res.readdata._data.length > 0) {
-          res.readdata._data.forEach((item, index) => {
-            if (item.type > 1 && item.fields_ext) {
-              item.fields_ext = JSON.parse(item.fields_ext);
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
+        }
+        if (res.Data && res.Data.length > 0) {
+          res.Data.forEach((item, index) => {
+            if (item.type > 1 && item.fieldsExt) {
+              item.fieldsExt = JSON.parse(item.fieldsExt);
               this.expandUsers.push(item);
             } else {
-              if (item.fields_ext !== '') {
+              if (item.fieldsExt !== '') {
                 this.expandUsers.push(item);
               }
             }
@@ -167,13 +216,14 @@ export default {
       }
       this.imageUrl = "";
       this.appFetch({
-        url: "deleteAvatar",
-        method: "delete",
-        splice: `/${this.query.id}` + "/avatar",
-        data: {}
+        url: "delete_avatar_post_v3",
+        method: "post",
+        data: {
+          aid: this.query.id
+        }
       }).then(res => {
-        if (res.errors) {
-          this.$message.error(res.errors[0].code);
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
         } else {
           this.deleBtn = false;
           this.$message.success("删除成功");
@@ -211,18 +261,22 @@ export default {
     },
     uploaderLogo(file) {
       let formData = new FormData();
+      formData.append("aid", this.query.id);
       formData.append("avatar", file.file);
       this.appFetch({
-        url: "upload",
+        url: "users_avatar_post_v3",
         method: "post",
-        splice: `${this.query.id}` + "/avatar",
         data: formData
       }).then(res => {
         if (res.errors) {
           this.$message.error(res.errors[0].code);
         } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.$message.success("上传成功");
-          this.imageUrl = res.readdata._data.avatarUrl;
+          this.imageUrl = res.Data.avatarUrl;
           this.deleBtn = true;
         }
       });
@@ -240,35 +294,31 @@ export default {
       // }
       this.userExtensionModification();
       this.appFetch({
-        url: "users",
-        method: "patch",
-        splice: `/${this.query.id}`,
+        url: "users_update_post_v3",
+        method: "post",
         data: {
-          data: {
-            attributes: {
-              newPassword: this.newPassword,
-              mobile: mobile,
-              groupId: this.userRole,
-              status: this.userInfo.status,
-              refuse_message: this.reasonsForDisable,
-              expired_at: this.expired_at,
-              username: this.userName,
-              password: this.oldPassword,
-              password_confirmation: this.confirmPassword
-            }
-          }
+          id: this.query.id,
+          newPassword: this.newPassword,
+          mobile: mobile,
+          groupId: this.userRole,
+          status: this.userInfo.status,
+          rejectReason: this.reasonsForDisable,
+          expiredAt: this.expired_at,
+          username: this.userName,
+          nickname: this.nickName,
+          // password: this.oldPassword,
+          // newPassword: this.confirmPassword
         }
       }).then(res => {
         if (res.errors) {
-          if (res.errors[0].detail) {
-            this.$message.error(
-              res.errors[0].code + "\n" + res.errors[0].detail[0]
-            );
-          } else {
-            this.$message.error(res.errors[0].code);
-          }
+          this.$message.error(res.errors[0].code);
         } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.$message({ message: "提交成功", type: "success" });
+          this.getUserDetail();
         }
       });
     },
@@ -278,14 +328,14 @@ export default {
       try {
         const response = await this.appFetch({
           method: "get",
-          url: "groups"
+          url: "groups_list_get_v3"
         });
-        const data = response.data;
-        this.options = data.map(v => {
-          return {
-            value: v.id,
-            label: v.attributes.name
-          };
+        const data = response.Data;
+        this.groupList = data;
+        data.map(v => {
+          if (v.id !== 7) {
+            this.options.push({value: v.id, label: v.name});
+          }
         });
       } catch (err) {
         console.error(err, "getUserList");
@@ -299,14 +349,14 @@ export default {
     },
     extendUsers(code) {
       let extendArr = '';
-      if (code.fields_ext.options) {
-        code.fields_ext.options.forEach(item => {
+      if (code.fieldsExt.options) {
+        code.fieldsExt.options.forEach(item => {
           if (item.checked) {
             extendArr += item.value + ' ';
           }
         })
       } else {
-        code.fields_ext.forEach(item => {
+        code.fieldsExt.forEach(item => {
           if (item.checked) {
             extendArr += item.value + ' ';
           }
@@ -322,23 +372,22 @@ export default {
           "type": "user_sign_in",
           "attributes": {
             "aid": item.aid,
-            "fields_desc": item.fields_desc,
+            "fieldsDesc": item.fieldsDesc,
             "id": item.id,
             "remark": "",
             "status": item.status,
             "type": item.type,
-            "user_id": item.user_id,      
+            "userId": item.userId,      
           }
         };
-        if (item.type > 1 && item.fields_ext) {
-          data.attributes.fields_ext = JSON.stringify(item.fields_ext);
+        if (item.type > 1 && item.fieldsExt) {
+          data.attributes.fieldsExt = JSON.stringify(item.fieldsExt);
           this.exends.push(data);
         } else {
-          data.attributes.fields_ext = item.fields_ext;
+          data.attributes.fieldsExt = item.fieldsExt;
           this.exends.push(data);
         }
       })
-      // console.log(this.exends);
       // this.modificationUsers(this.exends);
     },
 
@@ -352,11 +401,56 @@ export default {
           data
         }
       }).then(res => {
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
+        }
         console.log(res);
       })
     },
+    groupSwitch(value) {
+      let groupType = '';
+      let userGroup = '';
+      this.groupList.forEach(item => {
+        if (value === item.id) {
+          groupType = item.isPaid;
+        }
+        if (this.userGroupId === item.id) {
+          userGroup = item.isPaid;
+        }
+      });
+      if (userGroup === 0 && groupType === 0) {
+        this.userRole = value;
+      }
+      if (userGroup === 1 && groupType === 0) {
+        const text = '移入新用户组后，原用户组的付费信息全部失效。';
+        this.open(text, value);
+      }
+      if (userGroup === 1 && groupType === 1) {
+        const text = '移入新用户组后，原用户组的付费信息全部失效。';
+        this.open(text, value);
+      }
+      if (userGroup === 0 && groupType === 1) {
+        const text = '移入新用户组后，用户将享受付费权益。';
+        this.open(text, value);
+      }
+    },
+    open(text, value) {
+      this.$confirm(text, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        lockScroll: false,
+      }).then(() => {
+        this.userRole = value;
+      }).catch(() => {
+        this.userRole = this.userRole;
+      });
+    },
+    jumpUserDetails(userId) {
+      this.$router.push({path:'/admin/user-details', query: {id: userId}});
+    }
   },
-
   components: {
     Card,
     CardRow

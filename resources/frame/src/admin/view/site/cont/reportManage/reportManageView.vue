@@ -41,11 +41,11 @@
       <ContArrange
 				class="report-manage-content__table"
 				v-for="(items, index) in reportList"
-				:key="items._data.id"
-				:establish="!items.user ? '该用户被删除' : items.user._data.username"
-				:userId="!items.user?'该用户被删除':items.user._data.id"
-				:time="formatDate(items._data.created_at)"
-				:type="getType(items._data.type)"
+				:key="items.report.id"
+				:establish="!items.user.userName ? '该用户被删除' : items.user.userName"
+				:userId="!items.user.pid?'该用户被删除':items.user.pid"
+				:time="formatDate(items.report.createdAt)"
+				:type="getType(items.report.type)"
 			>
         <div class="report-manage-content__table-side" slot="side">
           <el-radio-group v-model="submitForm[index].radio" @change="radioChange($event,index)">
@@ -56,13 +56,13 @@
         <div class="report-manage-content__table-main" slot="main">
           <p>
 						页面地址：
-						<a :href="getUrl(items.user._data.id, items._data.thread_id, items._data.post_id).href" style="color: #3E4043;" target="_blank">
-							{{getUrl(items.user._data.id, items._data.thread_id, items._data.post_id).url}}
+						<a :href="getUrl(items.user.pid, items.report.threadId, items.report.postId).href" style="color: #3E4043;" target="_blank">
+							{{getUrl(items.user.pid, items.report.threadId, items.report.postId).url}}
 						</a>
 						</p>
-          <p>举报时间：{{formatDate(items._data.updated_at)}}</p>
+          <p>举报时间：{{formatDate(items.report.updatedAt)}}</p>
           <p>举报理由：</p>
-          <p>{{items._data.reason}}</p>
+          <p>{{items.report.reason}}</p>
         </div>
         <div class="report-manage-content__table-footer" slot="footer">
             <el-popover
@@ -83,7 +83,7 @@
                   type="primary"
                   size="mini"
                   @click="
-                    operationsSubmit('delete',1, items._data.id)
+                    operationsSubmit('delete',1, items.report.id)
                     closeDelet(`popover-${index}`)"
                   >确定</el-button
                 >
@@ -91,7 +91,7 @@
           <el-button slot="reference" type="text">删除</el-button>
             </el-popover>
           <i></i>
-          <el-button type="text" @click="operationsSubmit('handle',1, items._data.id)">标记已处理</el-button>
+          <el-button type="text" @click="operationsSubmit('handle',1, items.report.id)">标记已处理</el-button>
         </div>
       </ContArrange>
        <tableNoList v-show="reportList.length < 1"></tableNoList>

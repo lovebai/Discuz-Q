@@ -52,22 +52,22 @@ export default {
                 },
                 {
                   id: 1,
-                  title: "主题设置",
-                  name: "siteSet",
-                  icon: "iconzhandianshezhi"
-                },
-                {
-                  id: 2,
                   title: "功能设置",
                   name: "siteSet",
                   icon: "iconzhandianshezhi"
                 },
                 {
-                  id: 3,
+                  id: 2,
                   title: "首页数据设置",
                   name: "siteSet",
                   icon: "iconzhandianshezhi"
-                }
+                },
+                {
+                  id: 3,
+                  title: "SEO设置",
+                  name: "siteSet",
+                  icon: "iconzhandianshezhi"
+                },
               ]
             },
             {
@@ -123,6 +123,12 @@ export default {
               title: "其他服务设置",
               name: "otherServiceSet",
               icon: "iconqitafuwushezhi"
+            },
+            {
+              id: 10,
+              title: "插件设置",
+              name: "pluginUnit",
+              icon: "icon-chajian"
             },
             // {
             //   id:7,
@@ -331,7 +337,7 @@ export default {
       userName: "", //用户名
 
       dialogVisible: false, // 云API配置弹框
-      secretId:'', 
+      secretId:'',
       secretKey:'',
       appId:'',
     };
@@ -340,8 +346,8 @@ export default {
     // 清空缓存
     clearCache() {
       this.appFetch({
-        url: "clearCache",
-        method: "delete",
+        url: "cache_delete_get_v3",
+        method: "get",
         data: {}
       }).then(data => {
         if (data.errors) {
@@ -353,6 +359,10 @@ export default {
             this.$message.error(data.errors[0].code);
           }
         } else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return;
+          }
           this.$message({
             message: "缓存清空完毕",
             type: "success"
@@ -425,7 +435,7 @@ export default {
           this.sideList = [];
       }
 
-      this.checkQcloud();
+      // this.checkQcloud();
     },
 
     /*
@@ -512,8 +522,8 @@ export default {
           this.$router.push({ path: "/admin/cont-review" });
           break;
         case "recycleBin":
-          this.sideSubmenu = this.navList[3].submenu[4].submenu;
-          this.sideSubmenuSelect = this.navList[3].submenu[4].submenu[0].title;
+          this.sideSubmenu = this.navList[3].submenu[5].submenu;
+          this.sideSubmenuSelect = this.navList[3].submenu[5].submenu[0].title;
           this.$router.push({ path: "/admin/recycle-bin" });
           break;
         case "topicManagement":
@@ -541,8 +551,12 @@ export default {
         case "otherServiceSet":
           this.$router.push({ path: "/admin/other-service-set" });
           break;
+        case "pluginUnit":
+          this.$router.push({ path: "/admin/pulgin-unit" });
+          break;
+        
       }
-      this.checkQcloud();
+      // this.checkQcloud();
     },
 
     /*
@@ -570,10 +584,6 @@ export default {
             query: { name: "站点设置" }
           });
           break;
-        case "主题设置":
-          this.sideSubmenuSelect = title;
-          this.$router.push({ path: "/admin/site-theme" });
-          break;
         case "功能设置":
           this.sideSubmenuSelect = title;
           this.$router.push({ path: "/admin/site-function-set" });
@@ -581,6 +591,10 @@ export default {
         case "首页数据设置":
           this.sideSubmenuSelect = title;
           this.$router.push({ path: "/admin/site-sort-set" });
+          break;
+        case "SEO设置":
+          this.sideSubmenuSelect = title;
+          this.$router.push({ path: "/admin/site-seo-set" });
           break;
         case "最新主题":
           this.sideSubmenuSelect = title;
@@ -629,7 +643,6 @@ export default {
         default:
           this.$message.error("没有当前页面，跳转404页面");
           // this.$router.push({path:'/admin/home'});
-          console.log("没有当前页面，跳转404页面");
       }
     },
 
@@ -679,7 +692,6 @@ export default {
           this.sideList = this.navList[4].submenu;
           break;
         default:
-          console.log("获取菜单出错");
           this.$message.error("获取菜单出错");
       }
 
@@ -694,15 +706,15 @@ export default {
             this.sideSubmenu = this.navList[1].submenu[0].submenu;
             this.sideSubmenuSelect = this.navList[1].submenu[0].submenu[0].title;
             break;
-          case "主题设置":
+          case "功能设置":
             this.sideSubmenu = this.navList[1].submenu[0].submenu;
             this.sideSubmenuSelect = this.navList[1].submenu[0].submenu[1].title;
             break;
-          case "功能设置":
+          case "首页数据设置":
             this.sideSubmenu = this.navList[1].submenu[0].submenu;
             this.sideSubmenuSelect = this.navList[1].submenu[0].submenu[2].title;
             break;
-          case "首页数据设置":
+          case "SEO设置":
             this.sideSubmenu = this.navList[1].submenu[0].submenu;
             this.sideSubmenuSelect = this.navList[1].submenu[0].submenu[3].title;
             break;
@@ -753,85 +765,108 @@ export default {
           default:
             // this.$router.push({path:'/admin/home'});
             this.sideSubmenu = [];
-            console.log("当下没有侧边栏子菜单");
             this.$message.error("当下没有侧边栏子菜单");
         }
+      } else {
+        this.sideSubmenu = [];
       }
     },
 
     quitClick() {
+      const token = localStorage.getItem('access_token');
+      const userId = localStorage.getItem('user_id');
       localStorage.clear();
+      token && localStorage.setItem('access_token', token);
+      userId && localStorage.setItem('user_id', userId);
       this.$router.push({ path: "/admin/login" });
     },
 
-    // 判断腾讯云云api是否配置
-    checkQcloud() {
+    getEmoji() {
       this.appFetch({
-        url: "checkQcloud",
-        method: "get",
-        data: {}
-      }).then(data => {
-        if (!data.readdata._data.isBuildQcloud) {
-          this.dialogVisible = true;
-          this.tencentCloudList()//初始化云API配置
-        }
-      })
-      .catch(error => {});
-    },
-
-    tencentCloudList(){
-      this.appFetch({
-        url:'forum',
+        url:'emoji_list_get_v3',
         method:'get',
-        data:{
-
-        }
+        data:{}
       }).then(res=>{
-        if (res.errors){
-          this.$message.error(res.errors[0].code);
-        }else {
-          this.appId = res.readdata._data.qcloud.qcloud_app_id
-          this.secretId = res.readdata._data.qcloud.qcloud_secret_id
-          this.secretKey = res.readdata._data.qcloud.qcloud_secret_key
-        }
+        const emoji = res.Data;
+        webDb.setLItem('Emoji', emoji);
       })
     },
+
+    // 判断腾讯云云api是否配置
+    // checkQcloud() {
+    //   this.appFetch({
+    //     url: 'checkQcloud_get_v3',
+    //     method: "get",
+    //     data: {}
+    //   }).then(res => {
+    //     if (res.Code !== 0) {
+    //       this.$message.error(res.Message);
+    //       return
+    //     }
+    //     if (!res.Data.data.attributes.isBuildQcloud) {
+    //       this.dialogVisible = true;
+    //       this.tencentCloudList()//初始化云API配置
+    //     }
+    //   })
+    //   .catch(error => {});
+    // },
+
+    // tencentCloudList(){
+    //   this.appFetch({
+    //     url:'forum_get_v3',
+    //     method:'get',
+    //     data:{
+
+    //     }
+    //   }).then(res=>{
+    //     if (res.errors){
+    //       this.$message.error(res.errors[0].code);
+    //     }else {
+    //       if (res.Code !== 0) {
+    //         this.$message.error(res.Message);
+    //         return
+    //       }
+    //       const {Data: forumData} = res;
+    //       this.appId = forumData.qcloud.qcloudAppId
+    //       this.secretId = forumData.qcloud.qcloudSecretId
+    //       this.secretKey = forumData.qcloud.qcloudSecretKey
+    //     }
+    //   })
+    // },
     async  Submission(){
       try{
         await this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-              "attributes":{
-                "key":'qcloud_app_id',
-                "value":this.appId,
-                "tag": "qcloud"
-              }
+              "key":'qcloud_app_id',
+              "value":this.appId,
+              "tag": "qcloud"
             },
             {
-              "attributes":{
-                "key":'qcloud_secret_id',
-                "value":this.secretId,
-                "tag": "qcloud",
-              }
-              },
-              {
-                "attributes":{
-                  "key":'qcloud_secret_key',
-                  "value":this.secretKey,
-                  "tag": "qcloud",
-                }
-              }
-
+              "key":'qcloud_secret_id',
+              "value":this.secretId,
+              "tag": "qcloud",
+            },
+            {
+              "key":'qcloud_secret_key',
+              "value":this.secretKey,
+              "tag": "qcloud",
+            }
           ]
         }
       }).then(res=>{
         if(res.errors){
           throw new Error(res.errors[0].code);
-        }
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.$message({ message: '提交成功', type: 'success' });
+        }
       })
       }
         catch(err){
@@ -845,7 +880,8 @@ export default {
   created() {
     this.setDataStatus();
     this.userName = webDb.getLItem("username");
-    this.checkQcloud();
+    // this.checkQcloud();
+    this.getEmoji();
   },
   watch: {
     $route() {

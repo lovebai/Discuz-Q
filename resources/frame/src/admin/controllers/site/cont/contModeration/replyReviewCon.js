@@ -140,7 +140,7 @@ export default {
       let urlList = [];
 
       list.forEach((item)=>{
-        urlList.push(item._data.url)
+        urlList.push(item.url)
       });
 
       this.url.push(urlList[imgIndex]);
@@ -176,7 +176,7 @@ export default {
     },
 
     reasonForOperationChange(event,index){
-      this.submitForm[index].attributes.message = event;
+      this.submitForm[index].message = event;
     },
 
     handleCurrentChange(val) {
@@ -223,69 +223,108 @@ export default {
     },
 
     submitClick() {
+      // this.subLoading = true;
+      // this.patchPostsBatch(this.submitForm);
       this.subLoading = true;
-      this.patchPostsBatch(this.submitForm);
+      const recommend = [];
+      const cancelrecomend = [];
+      const detelethem = [];
+      this.submitForm.forEach((value,index) => {
+        if (value.radio === 0) {
+          recommend.push({
+            id: value.id,
+            isApproved: 1,
+          });
+        } else if(value.radio === 1) {
+          detelethem.push({
+            id: value.id,
+            isDeleted: true,
+          })
+        } else if (value.radio === 2) {
+          cancelrecomend.push({
+            id: value.id,
+            isApproved: 2,
+          })
+        }
+      })
+      if(recommend.length >= 1) {
+        this.patchPostsBatch(recommend);
+      }
+      if(detelethem.length >= 1) {
+        this.patchPostsBatch(detelethem);
+      }
+      if(cancelrecomend.length >= 1) {
+        this.patchPostsBatch(cancelrecomend);
+      }
     },
 
     radioChange(event,index){
       switch (event){
         case 0:
-          this.submitForm[index].attributes.isApproved = 1;
+          this.submitForm[index].isApproved = 1;
           break;
         case 1:
-          this.submitForm[index].attributes.isDeleted = true;
+          this.submitForm[index].isDeleted = true;
           break;
         case 2:
-          this.submitForm[index].attributes.isApproved = 2;
+          this.submitForm[index].isApproved = 2;
           break;
       }
     },
 
     allOperationsSubmit(val){
       this.btnLoading = val;
-
+      const submitArr = [];
       switch (val){
         case 1:
           this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isApproved = 1;
+            submitArr.push({
+              id: item.id,
+              isApproved: 1,
+            })
           });
           break;
         case 2:
           this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isDeleted = true;
+            submitArr.push({
+              id: item.id,
+              isDeleted: true,
+            })
           });
           break;
         case 3:
           this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isApproved = 2;
+            submitArr.push({
+              id: item.id,
+              isApproved: 2,
+            })
+            // this.submitForm[index].isApproved = 2;
           });
           break;
       }
-      this.patchPostsBatch(this.submitForm);
+      this.patchPostsBatch(submitArr);
     },
 
     singleOperationSubmit(val,categoryId,themeId,index){
-      let data = {
-        "type": "posts",
-        "attributes": {
-          // "isApproved": 0,
-          // 'isDeleted':false
-        }
-      };
+      let data = [
+         {
+          id: Number(themeId)
+         }
+      ];
       switch (val){
         case 1:
-          data.attributes.isApproved = 1;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isApproved = 1;
+          data[0].message = this.submitForm[index].message;
           this.patchPosts(data,themeId);
           break;
         case 2:
-          data.attributes.isDeleted = true;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isDeleted = true;
+          data[0].message = this.submitForm[index].message;
           this.patchPosts(data,themeId);
           break;
         case 3:
-          data.attributes.isApproved = 2;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isApproved = 2;
+          data[0].message = this.submitForm[index].message;
           this.patchPosts(data,themeId);
           break;
         default:
@@ -299,7 +338,7 @@ export default {
       //回帖：replyId
 
       let routeData = this.$router.resolve({
-        path: "/topic/index?id=" + id,   //id当前是回帖id
+        path: "/thread/" + id,   //id当前是回帖id
       });
       window.open(routeData.href, '_blank');
     },
@@ -323,45 +362,44 @@ export default {
     * */
     getPostsList(pageNumber){
       this.appFetch({
-        url:'posts',
+        url:'posts_get_v3',
         method:'get',
         data:{
-          include: ['user','thread','thread.category','thread.firstPost','images'],
-          'filter[isDeleted]':'no',
-          'filter[username]':this.searchUserName,
-          'page[number]':pageNumber,
-          'page[size]':this.pageSelect,
-          'filter[q]':this.keyWords,
-          'filter[isApproved]':this.searchReviewSelect,
-          'filter[createdAtBegin]':this.relativeTime[1],
-          'filter[createdAtEnd]':this.relativeTime[0],
-          // 'filter[categoryId]':this.categoriesListSelect,
-          'filter[categoryId]':this.categoriesListSelect[this.categoriesListSelect.length - 1],
-          'filter[highlight]':this.showSensitiveWords?'yes':'no',
-          'sort':'-updatedAt'
+          page:pageNumber,
+          perPage:this.pageSelect,
+          isDeleted: 'no',
+          nickname: this.searchUserName,
+          q: this.keyWords,
+          isApproved: this.searchReviewSelect,
+          createdAtBegin: this.relativeTime[1],
+          createdAtEnd: this.relativeTime[0],
+          categoryId: this.categoriesListSelect[this.categoriesListSelect.length - 1],
+          highlight: this.showSensitiveWords?'yes':'no',
+          sort:'-created_at',
         }
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.themeList = [];
           this.submitForm = [];
-          this.themeList = res.readdata;
-          this.total = res.meta.postCount;
-          this.pageCount = res.meta.pageCount;
+          this.themeList = res.Data.pageData;
+          this.total = res.Data.totalCount;
+          this.pageCount = res.Data.totalPage;
 
           this.themeList.forEach((item, index) => {
             this.submitForm.push({
-              // message:'',
               Select: '无',
               radio: '',
-              type: 'posts',
-              id: item._data.id,
-              attributes: {
-                isApproved: 0,
-                isDeleted: false,
-                message: ''
-              }
+              type: 2,
+              id: item.postId,
+              isApproved: 0,
+              isDeleted: false,
+              message: '',
             })
           });
         }
@@ -371,38 +409,35 @@ export default {
     },
     getCategories(){
       this.appFetch({
-        url:'categories',
+        url:'categories_get_v3',
         method:'get',
         data:{}
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          // this.categoriesList = [];
-          // res.data.forEach((item, index) => {
-          //   this.categoriesList.push({
-          //     name: item.attributes.name,
-          //     id: item.id
-          //   })
-          // })
-          res.data.forEach((item, index) => {
-            if (item.attributes.children.length) {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          res.Data.forEach((item, index) => {
+            if (item.children.length) {
               const child = []
-              item.attributes.children.forEach(c => {
+              item.children.forEach(c => {
                 child.push({
                   label: c.name,
-                  value: c.search_ids
+                  value: c.searchIds
                 })
               })
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids,
+                label: item.name,
+                value: item.searchIds,
                 children: child
               })
             } else {
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids
+                label: item.name,
+                value: item.searchIds
               })
             }
           })
@@ -413,9 +448,10 @@ export default {
     },
     patchPostsBatch(data){
       this.appFetch({
-        url:'postsBatch',
-        method:'patch',
+        url:'submit_review_post_v3',
+        method:'post',
         data:{
+          type: 2,
           data
         }
       }).then(res=>{
@@ -424,15 +460,15 @@ export default {
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          if (res.meta && res.data) {
-            this.$message.error('操作失败！');
-          } else {
-            this.getPostsList(Number(webDb.getLItem('currentPag')) || 1);
-            this.$message({
-              message: '操作成功',
-              type: 'success'
-            });
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          this.getPostsList(Number(webDb.getLItem('currentPag')) || 1);
+          this.$message({
+            message: '操作成功',
+            type: 'success'
+          });
         }
       }).catch(err=>{
 
@@ -440,10 +476,10 @@ export default {
     },
     patchPosts(data,id){
       this.appFetch({
-        url:'posts',
-        method:'patch',
-        splice:'/' + id,
+        url:'submit_review_post_v3',
+        method:'post',
         data:{
+          type: 2,
           data
         }
       }).then(res=>{
@@ -452,6 +488,10 @@ export default {
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.getPostsList(Number(webDb.getLItem('currentPag')) || 1);
           this.$message({
             message: '操作成功',
@@ -460,7 +500,15 @@ export default {
         }
       }).catch(err=>{
       })
-    }
+    },
+
+    contentIndexes(data, val) {
+      return commonHelper.dataTypeJudgment(data, val);
+    },
+    filterContent(text) {
+      const emojis = webDb.getLItem('Emoji');
+      return commonHelper.convertEmoticon(text, emojis);
+    },
 
   },
   created(){

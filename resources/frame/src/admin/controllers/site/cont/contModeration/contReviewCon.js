@@ -8,6 +8,7 @@ import Page from '../../../../view/site/common/page/page';
 import tableNoList from '../../../../view/site/common/table/tableNoList';
 import webDb from 'webDbHelper';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
+import commonHelper from '../../../../../helpers/commonHelper';
 
 
 export default {
@@ -140,7 +141,7 @@ export default {
       let urlList = [];
 
       list.forEach((item)=>{
-        urlList.push(item._data.url)
+        urlList.push(item.url)
       });
 
       this.url.push(urlList[imgIndex]);
@@ -164,7 +165,7 @@ export default {
     },
 
     reasonForOperationChange(event,index){
-      this.submitForm[index].attributes.message = event;
+      this.submitForm[index].message = event;
     },
 
     handleCurrentChange(val) {
@@ -211,76 +212,108 @@ export default {
 
     submitClick() {
       this.subLoading = true;
-      this.patchThreadsBatch(this.submitForm);
+      const recommend = [];
+      const cancelrecomend = [];
+      const detelethem = [];
+      this.submitForm.forEach((value,index) => {
+        if (value.radio === 0) {
+          recommend.push({
+            id: value.id,
+            isApproved: 1,
+          });
+        } else if(value.radio === 1) {
+          detelethem.push({
+            id: value.id,
+            isDeleted: true,
+          })
+        } else if (value.radio === 2) {
+          cancelrecomend.push({
+            id: value.id,
+            isApproved: 2,
+          })
+        }
+      })
+      if(recommend.length >= 1) {
+        this.patchThreadsBatch(recommend);
+      }
+      if(detelethem.length >= 1) {
+        this.patchThreadsBatch(detelethem);
+      }
+      if(cancelrecomend.length >= 1) {
+        this.patchThreadsBatch(cancelrecomend);
+      }
+      // this.patchThreadsBatch(this.submitForm);
     },
 
     radioChange(event,index){
       switch (event){
         case 0:
-          this.submitForm[index].attributes.isApproved = 1;
+          this.submitForm[index].isApproved = 1;
           break;
         case 1:
-          this.submitForm[index].attributes.isDeleted = true;
+          this.submitForm[index].isDeleted = true;
           break;
         case 2:
-          this.submitForm[index].attributes.isApproved = 2;
+          this.submitForm[index].isApproved = 2;
           break;
       }
     },
 
     allOperationsSubmit(val){
       this.btnLoading = val;
-
+      const submitArr = [];
       switch (val){
         case 1:
           this.submitForm.forEach((item,index)=>{
-              this.submitForm[index].attributes.isApproved = 1;
+            submitArr.push({
+              id: item.id,
+              isApproved: 1,
+            })
+            // this.submitForm[index].isApproved = 1;
           });
           break;
         case 2:
           this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isDeleted = true;
+            submitArr.push({
+              id: item.id,
+              isDeleted: true,
+            })
+            // this.submitForm[index].isDeleted = true;
           });
           break;
         case 3:
           this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isApproved = 2;
+            submitArr.push({
+              id: item.id,
+              isApproved: 2,
+            })
+            // this.submitForm[index].isApproved = 2;
           });
           break;
       }
-      this.patchThreadsBatch(this.submitForm);
+      this.patchThreadsBatch(submitArr);
     },
 
     singleOperationSubmit(val,categoryId,themeId,index){
-      let data = {
-        "type": "threads",
-        "attributes": {
-          // "isApproved": 0,
-          // 'isDeleted':false
-        },
-        "relationships": {
-          "category": {
-            "data": {
-              "type": "categories",
-              "id": categoryId
-            }
-          }
+      let data = [
+        {
+          id: Number(themeId)
         }
-      };
+      ]
       switch (val){
         case 1:
-          data.attributes.isApproved = 1;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isApproved = 1;
+          data[0].message = this.submitForm[index].message;
           this.patchThreads(data,themeId);
           break;
         case 2:
-          data.attributes.isDeleted = true;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isDeleted = true;
+          data[0].message = this.submitForm[index].message;
           this.patchThreads(data,themeId);
           break;
         case 3:
-          data.attributes.isApproved = 2;
-          data.attributes.message = this.submitForm[index].attributes.message;
+          data[0].isApproved = 2;
+          data[0].message= this.submitForm[index].message;
           this.patchThreads(data,themeId);
           break;
         default:
@@ -293,14 +326,14 @@ export default {
       //编辑：/reply-to-topic  隐藏传入内容，带id
       //回帖：replyId
       let routeData = this.$router.resolve({
-        path: "/topic/index?id=" + id,
+        path: "/thread/" + id,
       });
       window.open(routeData.href, '_blank');
     },
 
     editClick(id,typeId){
       let routeData = this.$router.resolve({
-        path: `/thread/post?type=${typeId}&operating=edit&threadId=${id}`
+        path: `/thread/post?id=${id}`
       });
       window.open(routeData.href, '_blank');
     },
@@ -317,53 +350,44 @@ export default {
     * */
     getThemeList(pageNumber){
       this.appFetch({
-        url:'threads',
+        url: 'thread_get_v3',
         method:'get',
         data:{
-          include:['user', 'firstPost', 'lastPostedUser', 'category','firstPost.images','firstPost.attachments', 'threadVideo'],
-          'filter[isDeleted]':'no',
-          'filter[username]':this.searchUserName,
-          'page[number]':pageNumber,
-          'page[size]':this.pageSelect,
-          'filter[q]':this.keyWords,
-          'filter[isApproved]':this.searchReviewSelect,
-          'filter[createdAtBegin]':this.relativeTime[1],
-          'filter[createdAtEnd]':this.relativeTime[0],
-          // 'filter[categoryId]':this.categoriesListSelect,
-          'filter[categoryId]':this.categoriesListSelect[this.categoriesListSelect.length - 1],
-          'filter[highlight]':this.showSensitiveWords?'yes':'no',
-          'sort':'-updatedAt'
+          page: pageNumber,
+          perPage: this.pageSelect,
+          isApproved: this.searchReviewSelect,
+          nickname: this.searchUserName,
+          isDeleted: 'no',
+          q: this.keyWords,
+          createdAtBegin: this.relativeTime[1],
+          createdAtEnd: this.relativeTime[0],
+          categoryId: this.categoriesListSelect[this.categoriesListSelect.length - 1],
+          highlight: this.showSensitiveWords ? 'yes': 'no',
+          sort: '-created_at'
         }
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          // console.log(res,'审核的数据');
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.themeList = [];
           this.submitForm = [];
-          this.themeList = res.readdata;
-          this.total = res.meta.threadCount;
-          this.pageCount = res.meta.pageCount;
+          this.themeList = res.Data.pageData;
+          this.total = res.Data.totalCount;
+          this.pageCount = res.Data.totalPage;
 
           this.themeList.forEach((item, index) => {
             this.submitForm.push({
               Select: '无',
               radio: '',
-              type: 'threads',
-              id: item._data.id,
-              attributes: {
-                isApproved: 0,
-                isDeleted: false,
-                message: '',
-              },
-              relationships: {
-                category: {
-                  data: {
-                    type: "categories",
-                    id: item.category._data.id
-                  }
-                }
-              }
+              type: 1,
+              id: item.threadId,
+              isApproved: 0,
+              isDeleted: false,
+              message: '',
             })
           });
         }
@@ -373,38 +397,35 @@ export default {
     },
     getCategories(){
       this.appFetch({
-        url:'categories',
+        url:'categories_get_v3',
         method:'get',
         data:{}
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          // this.categoriesList = [];
-          // res.data.forEach((item, index) => {
-          //   this.categoriesList.push({
-          //     name: item.attributes.name,
-          //     id: item.id
-          //   })
-          // })
-          res.data.forEach((item, index) => {
-            if (item.attributes.children.length) {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          res.Data.forEach((item, index) => {
+            if (item.children.length) {
               const child = []
-              item.attributes.children.forEach(c => {
+              item.children.forEach(c => {
                 child.push({
                   label: c.name,
-                  value: c.search_ids
+                  value: c.searchIds
                 })
               })
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids,
+                label: item.name,
+                value: item.searchIds,
                 children: child
               })
             } else {
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids
+                label: item.name,
+                value: item.searchIds
               })
             }
           })
@@ -415,9 +436,10 @@ export default {
     },
     patchThreadsBatch(data){
       this.appFetch({
-        url:'threadsBatch',
-        method:'patch',
+        url:'submit_review_post_v3',
+        method:'post',
         data:{
+          type: 1,
           data
         }
       }).then(res=>{
@@ -426,15 +448,15 @@ export default {
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          if (res.meta && res.data) {
-            this.$message.error('操作失败！');
-          } else {
-            this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
-            this.$message({
-              message: '操作成功',
-              type: 'success'
-            });
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
+          this.$message({
+            message: '操作成功',
+            type: 'success'
+          });
         }
       }).catch(err=>{
 
@@ -442,10 +464,10 @@ export default {
     },
     patchThreads(data,id){
       this.appFetch({
-        url:'threads',
-        method:'patch',
-        splice:'/' + id,
+        url:'submit_review_post_v3',
+        method:'post',
         data:{
+          type: 1,
           data
         }
       }).then(res=>{
@@ -454,16 +476,15 @@ export default {
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          if (res.meta && res.data) {
-            this.checkedTheme = [];
-            this.$message.error('操作失败！');
-          } else {
-            this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
-            this.$message({
-              message: '操作成功',
-              type: 'success'
-            });
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
+          this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
+          this.$message({
+            message: '操作成功',
+            type: 'success'
+          });
         }
       }).catch(err=>{
       })
@@ -475,8 +496,34 @@ export default {
       } else {
         this.getThemeList(Number(webDb.getLItem('currentPag'))||1);
       }
-    }
+    },
+    
+    contentIndexes(data, val) {
+      return commonHelper.dataTypeJudgment(data, val);
+    },
+    filterContent(text) {
+      const emojis = webDb.getLItem('Emoji');
+      return commonHelper.convertEmoticon(text, emojis);
+    },
 
+    imagesIndexes(data) {
+      let images = [];
+      const values = Object.values(data.indexes || {});
+      if (values.length > 0 && values[0].tomId === '101') {
+        images = values[0].body;
+      }
+      return images;
+    },
+
+    videoIndexes(data) {
+      const values = Object.values(data.indexes || {});
+      return values[0].body.isApproved
+    },
+
+    typeIndexes(data) {
+      const values = Object.values(data.indexes || {});
+      return values[0].tomId
+    }
   },
 
   created(){

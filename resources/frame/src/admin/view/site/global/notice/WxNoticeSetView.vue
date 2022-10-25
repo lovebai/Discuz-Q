@@ -15,7 +15,7 @@
           </el-table-column>
 
           <el-table-column
-            prop="_data.type_name"
+            prop="typeName"
             label="通知类型"
            >
           </el-table-column>
@@ -27,7 +27,7 @@
           align="center"
         >
         <template slot-scope="scope">
-          <span v-if="scope.row._data.status" class="iconfont iconicon_select" ></span>
+          <span v-if="scope.row.status" class="iconfont iconicon_select" ></span>
           <span v-else class="iconfont iconicon_"  ></span>
         </template>
         </el-table-column>
@@ -39,18 +39,18 @@
           <template slot-scope="scope">
             <el-button
               size="mini"
-              @click="configClick(scope.row._data.id,scope.row._data.type_name)">
+              @click="configClick(scope.row.id,scope.row._data.typeName)">
               配置
             </el-button>
             <el-button
-              v-if="scope.row._data.status == 0"
+              v-if="scope.row.status == 0"
               size="mini"
-              @click.native.prevent="noticeSetting(scope.row._data.id,'open')"
+              @click.native.prevent="noticeSetting(scope.row.id,'open')"
             >开启
             </el-button>
             <el-button
-              v-if="scope.row._data.status == 1"
-              @click.native.prevent="noticeSetting(scope.row._data.id,'close')"
+              v-if="scope.row.status == 1"
+              @click.native.prevent="noticeSetting(scope.row.id,'close')"
               size="mini">
               关闭
             </el-button>

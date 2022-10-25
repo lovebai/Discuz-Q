@@ -2,17 +2,21 @@
   <div>
     <Card header="云点播配置"></Card>
     <Card header="子应用：">
-      <CardRow description="请填写子应用 ID，如果没有开启子应用，此处留空即可，留空将自动采用主应用。">
+      <CardRow
+        description="请填写子应用 ID，如果没有开启子应用，此处留空即可，留空将自动采用主应用。"
+      >
         <el-input v-model="subApplication" clearable></el-input>
         <template #tail>
-          <a href="https://cloud.tencent.com/product/vod" target="_blank">未申请？点此申请</a>
+          <a href="https://cloud.tencent.com/product/vod" target="_blank"
+            >未申请？点此申请</a
+          >
         </template>
       </CardRow>
     </Card>
 
     <Card header="转码模板：">
       <CardRow
-        description="腾讯云账户 - 云点播 - 视频转码模板中的模板ID。还需在回调设置中配置下回调URL，回调URL为：hhttp(s)://当前域名/api/threads/notify/video?qvodtoken=云点播回调校验码，回调事件请选择”视频上传完成回调“和”视频转码完成回调“。"
+        description="腾讯云账户 - 云点播 - 视频转码模板中的模板ID。还需在回调设置中配置下回调URL，回调URL为：http(s)://当前域名/api/threads/notify/video?qvodtoken=云点播回调校验码，回调事件请选择”视频上传完成回调“和”视频转码完成回调“。"
       >
         <el-input v-model="vodTranscode" clearable></el-input>
       </CardRow>
@@ -27,7 +31,9 @@
     </Card>
 
     <Card header="截图模板：">
-      <CardRow description="请填写腾讯云账户 - 云点播 - 视频处理设置 - 模板设置 - 截图模板中的模板ID，如果不填写则采用默认截图模板。">
+      <CardRow
+        description="请填写腾讯云账户 - 云点播 - 视频处理设置 - 模板设置 - 截图模板中的模板ID，如果不填写则采用默认截图模板。"
+      >
         <el-input v-model="screenshot" clearable></el-input>
       </CardRow>
     </Card>
@@ -41,7 +47,9 @@
     </Card>
 
     <Card header="云点播防盗链 Key：">
-      <CardRow description="请填写腾讯云账户 - 云点播 - 分发播放设置 - 域名管理 - 设置中的Key 防盗链。">
+      <CardRow
+        description="请填写腾讯云账户 - 云点播 - 分发播放设置 - 域名管理 - 设置中的Key 防盗链。"
+      >
         <el-input v-model="vodUrlKey" clearable></el-input>
       </CardRow>
     </Card>
@@ -54,7 +62,9 @@
       </CardRow>
     </Card>
     <Card header="支持的视频扩展名:">
-      <CardRow description="多个请用,隔开，例如 wmv,rm,mov,mpeg,mp4,3gp,flv,avi,rmvb">
+      <CardRow
+        description="多个请用,隔开，例如 wmv,rm,mov,mpeg,mp4,3gp,flv,avi,rmvb"
+      >
         <el-input v-model="vodExt" clearable></el-input>
       </CardRow>
     </Card>
@@ -72,9 +82,22 @@
         <el-input v-model="vodToken" clearable></el-input>
       </CardRow>
     </Card>
+    
+     <Card>
+      <CardRow
+        description="开启后，用户在首页浏览帖子，帖子内视频自动播放，滑走后自动停止播放"
+      >
+        <div class="demand-switch">
+          <p class="demand-switch__video">视频在首页自动播放</p>
+          <el-switch v-model="videoDemand" active-color="#336699" inactive-color="#bbbbbb"></el-switch>
+        </div>
+      </CardRow>
+    </Card>
 
     <Card class="footer-btn">
-      <el-button type="primary" size="medium" @click="Submission">提交</el-button>
+      <el-button type="primary" size="medium" @click="Submission"
+        >提交</el-button
+      >
     </Card>
   </div>
 </template>

@@ -77,10 +77,10 @@
       align-items: center;
 
       &-title {
-        width: 70PX;
+        min-width: 70PX;
       }
       &-titles {
-        width: 100PX;
+        min-width: 100PX;
       }
       .el-input {
         flex: 1;
@@ -189,11 +189,18 @@
 
       &-main {
         line-height: 36PX;
+        img {
+          max-width: 100%;
+        }
         &__cont-text {
           width: 100%;
           color: $titleColor;
           word-break: break-all;
           display: block;
+
+          img {
+            max-width: 100%;
+          }
         }
 
         &__cont-imgs {
@@ -253,6 +260,10 @@
         padding-left: 10PX;
       }
     }
+    .cont-manage__option-select-tip {
+      margin-left: 26PX;
+      color: #909399;
+    }
     .card-box__main {
       display: flex;
     }
@@ -282,6 +293,10 @@
       }    
     }
   }
+}
+.cont-manage-theme__table-main__audio {
+  width: 50%;
+  height: 50PX;
 }
 
 /*
@@ -373,11 +388,18 @@
       &-main {
         line-height: 20PX;
 
+        img {
+          max-width: 100%;
+        }
         &__cont-text {
           width: 100%;
           color: $titleColor;
           word-break: break-all;
           display: block;
+
+          img {
+            max-width: 100%;
+          }
         }
 
         &__cont-imgs {
@@ -596,6 +618,9 @@
 
     &__main {
       line-height: 20PX;
+      img {
+        max-width: 100%;
+      }
       .highlight {
         background-color: yellow;
       }
@@ -605,6 +630,10 @@
         color: $titleColor;
         word-break: break-all;
         display: block;
+
+        img {
+          max-width: 100%;
+        }
       }
 
       &__cont-imgs {
@@ -681,7 +710,19 @@
     }
   }
 }
-
+.cont-review-table__main-box {
+  width: 100%;
+  overflow: hidden;
+}
+.cont-review-table__main__cont-text {
+  display: block;
+  p {
+    width: 100%;
+    img {
+      max-width: 100%;
+    }
+  }
+}
 /*
   回复审核
 */
@@ -815,6 +856,9 @@
         color: $titleColor;
         word-break: break-all;
         display: block;
+        img {
+          max-width: 100%;
+        }
       }
 
       &__cont-imgs {
@@ -1048,12 +1092,17 @@
 
     &__main {
       line-height: 20PX;
-
+      img {
+        max-width: 100%;
+      }
       &__cont-text {
         width: 100%;
         color: $titleColor;
         word-break: break-all;
         display: block;
+        img {
+          max-width: 100%;
+        }
       }
 
       &__cont-imgs {
@@ -1216,6 +1265,10 @@
         color: $titleColor;
         word-break: break-all;
         display: block;
+
+        img {
+          max-width: 100%;
+        }
       }
 
       &__cont-imgs {
@@ -1331,7 +1384,7 @@
     }
 
     &__table-main {
-      word-break:break-all; 
+      word-break:break-all;
     }
 
     &__table-footer {

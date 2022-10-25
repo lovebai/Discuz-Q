@@ -36,15 +36,8 @@
                 :value="item.value">
               </el-option>
             </el-select>
-            <!-- <el-select v-model="categoriesListSelect" size="medium" clearable placeholder="选择搜索分类">
-              <el-option
-                v-for="item in categoriesList"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id">
-              </el-option>
-            </el-select> -->
             <el-cascader
+              clearable
               v-model="categoriesListSelect"
               :options="categoriesList"
               :props="{ expandTrigger: 'hover', checkStrictly: true }"
@@ -67,49 +60,48 @@
       <div class="cont-review-table">
         <ContArrange
           v-for="(items,index) in  themeList"
-          :replyBy="!items.user?'该用户被删除':items.user._data.username"
-          :themeName="items.thread._data.isLongArticle?items.thread._data.title:items.thread.firstPost._data.content"
-          :titleIcon="titleIcon(items.thread._data)"
-          :finalPost="formatDate(items._data.updatedAt)"
-          :ip="items._data.ip"
-          :userId="!items.user?'该用户被删除':items.user._data.id"
-          :key="items._data.id"
+          :replyBy="!items.nickname ? '该用户被删除': items.nickname"
+          :themeName="items.title"
+          :titleIcon="titleIcon(items)"
+          :finalPost="formatDate(items.updatedAt)"
+          :ip="items.ip"
+          :userId="!items.user?'该用户被删除':items.userId"
+          :key="index"
         >
           <div class="cont-review-table__side" slot="side">
             <el-radio-group v-model="submitForm[index].radio" @change="radioChange($event,index)">
               <el-radio :label="0">通过</el-radio>
               <el-radio :label="1">删除</el-radio>
-              <el-radio :label="2" v-if="items._data.isApproved !== 2" :disabled="items._data.isApproved === 2">忽略</el-radio>
+              <el-radio :label="2" v-if="items.isApproved !== 2" :disabled="items.isApproved === 2">忽略</el-radio>
             </el-radio-group>
           </div>
 
-          <!-- <a slot="longText" class="cont-review-table__long-text" v-if="items.thread._data.isLongArticle" :href="'/topic/index?id=' + items._data.id" >
-            {{items.thread._data.title}}
-            <span  class="iconfont" :class="parseInt(items.thread._data.price) > 0?'iconmoney':'iconchangwen'" ></span>
-          </a> -->
-
           <div class="cont-review-table__main" slot="main">
-            <!--<a :href="'/topic/index?id=' + items._data.id" style="color: #333;" target="_blank" v-html="items._data.contentHtml"></a>-->
-            <a class="cont-review-table__main__cont-text" :href="'/topic/index?id=' + items.thread._data.id" target="_blank" v-html="items._data.contentHtml"></a>
+            <a
+              class="cont-review-table__main__cont-text"
+              :href="items.replyPostId ? `/thread/comment/${items.replyPostId}?threadId=${items.threadId}` : `/thread/${items.threadId}`"
+              target="_blank"
+              v-html="$xss(filterContent(items.content.text))"
+            ></a>
             <div class="cont-review-table__main__cont-imgs">
-              <p class="cont-review-table__main__cont-imgs-p" v-for="(item,index) in items.images" :key="index">
-                <img  v-lazy="item._data.thumbUrl" @click="imgShowClick(items.images,index)" :alt="item._data.fileName">
+              <p class="cont-review-table__main__cont-imgs-p" v-for="(item, indexs) in items.content.indexes" :key="indexs">
+                <img  v-lazy="item.thumbUrl" @click="imgShowClick(items.content.indexes, indexs)" :alt="item.fileName">
               </p>
             </div>
           </div>
 
           <div class="cont-review-table__footer" slot="footer">
             <div class="cont-review-table__footer__lf">
-              <el-button type="text" @click="singleOperationSubmit(1,items.thread.category._data.id,items._data.id,index)">通过</el-button>
+              <el-button type="text" @click="singleOperationSubmit(1,items.categoryId,items.postId,index)">通过</el-button>
               <i></i>
-              <el-button type="text" @click="singleOperationSubmit(2,items.thread.category._data.id,items._data.id,index)">删除</el-button>
+              <el-button type="text" @click="singleOperationSubmit(2,items.categoryId,items.postId,index)">删除</el-button>
               <i></i>
-              <el-button type="text" v-if="items._data.isApproved !== 2" @click="singleOperationSubmit(3,items.thread.category._data.id,items._data.id,index)">忽略</el-button>
+              <el-button type="text" v-if="items.isApproved !== 2" @click="singleOperationSubmit(3,items.categoryId,items.postId, index)">忽略</el-button>
             </div>
 
             <div class="cont-review-table__footer__rt">
               <span>操作理由：</span>
-              <el-input size="medium" clearable v-model="submitForm[index].attributes.message" ></el-input>
+              <el-input size="medium" clearable v-model="submitForm[index].message" ></el-input>
               <el-select size="medium" @change="reasonForOperationChange($event,index)" v-model="submitForm[index].Select" placeholder="选择操作理由">
                 <el-option
                   v-for="item in reasonForOperation"
@@ -121,7 +113,7 @@
             </div>
 
             <div class="cont-review-table__footer__bottom">
-              <el-button type="text" @click="viewClick(items.thread._data.id)">查看</el-button>
+              <el-button type="text" @click="viewClick(items.threadId)">查看</el-button>
             </div>
 
           </div>

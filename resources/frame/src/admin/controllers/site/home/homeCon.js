@@ -2,12 +2,12 @@
  * 首页控制器
  */
 import Card from '../../../view/site/common/card/card';
-import axios from 'axios'
 
 export default {
   data:function () {
     return {
       siteInfo:{},   //系统信息
+      unapproved:{}, //待处理事项
       newVersion: false,  // 新版本是否显示
       versionNumber: '',
       oldVersion: '',
@@ -16,15 +16,21 @@ export default {
 
   created(){
     this.appFetch({
-      url:"siteinfo",
+      url:"siteinfo_get_v3",
       method:"get",
-      data:{}
+      data: {}
     }).then(res => {
       if (res.errors){
         this.$message.error(res.errors[0].code);
       }else {
-        this.siteInfo = res.data.attributes;
-        this.oldVersion = res.data.attributes.version;
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
+        }
+        const {siteinfo, unapproved} = res.Data;
+        this.siteInfo = siteinfo;
+        this.unapproved = unapproved;
+        this.oldVersion = siteinfo.version;
         this.compareSize();
       }
     });

@@ -21,23 +21,8 @@ export default {
         description: '用户在小程序使用微信授权登录',
         status:'',
         icon:'iconxiaochengxu'
-      }, {
-        name: 'PC端微信扫码登录',
-        type:'oplatform_close',
-        tag: 'wx_oplatform',
-        description: '用户在PC的网页使用微信扫码登录',
-        status:'',
-        icon:'iconweixin'
-      }, // {
-      //   name: 'UCenter',
-      //   type: 'ucenter_close',
-      //   tag:'ucenter',
-      //   description: '配置UCenter地址以及通信密钥',
-      //   status: '',
-      //   icon: 'iconucenter',
-      // }
+      },
     ]
-      // settingStatus:{}
     }
   },
   created:function(){
@@ -47,7 +32,7 @@ export default {
     loadStatus(){
       //初始化登录设置状态
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{
         }
@@ -55,30 +40,15 @@ export default {
         if (data.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          this.forums = data.readdata._data;
-          console.log(data,'这是初始化');
-          if (data.readdata._data.passport.offiaccount_close == '0') {
-            this.settingStatus[0].status = false;
-          } else {
-            this.settingStatus[0].status = true;
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
           }
-          if (data.readdata._data.passport.miniprogram_close == '0') {
-            this.settingStatus[1].status = false;
-          } else {
-            this.settingStatus[1].status = true;
-          }
-          if (data.readdata._data.passport.oplatform_close == '0') {
-            this.settingStatus[2].status = false;
-          } else {
-            this.settingStatus[2].status = true;
-          }
-          if (data.readdata._data.ucenter.ucenter == false) {
-            this.settingStatus[3].status = false;
-          } else {
-            this.settingStatus[3].status = true;
-          }
+          const {Data: forumData} = data;
+          this.forums = forumData;
+          this.settingStatus[0].status = (forumData.passport.offiaccountOpen != '0');
+          this.settingStatus[1].status = (forumData.passport.miniprogramOpen != '0');
         }
-        // this.$message({'修改成功'});
       }).catch(error=>{
       })
     },
@@ -98,16 +68,15 @@ export default {
     },
     //修改配置状态
     loginSetting(index,type,status){
-      console.log(type, status, '9999999')
       if(status == '1') {
         if(type == 'offiaccount_close'){
-          if(!this.forums.passport.offiaccount_app_id || !this.forums.passport.offiaccount_app_secret){
+          if(!this.forums.passport.offiaccountAppId || !this.forums.passport.offiaccountAppSecret){
             this.$message.error('请先填写配置再开启');
             return;
           }
         }
         if(type == 'miniprogram_close'){
-          if(!this.forums.passport.miniprogram_app_id || !this.forums.passport.miniprogram_app_secret){
+          if(!this.forums.passport.miniprogramAppId || !this.forums.passport.miniprogramAppSecret){
             this.$message.error('请先填写配置再开启');
             return;
           }
@@ -115,7 +84,7 @@ export default {
       }
 
       if (type === 'ucenter_close') {
-        if (!this.forums.ucenter.ucenter_appid || !this.forums.ucenter.ucenter_key || !this.forums.ucenter.ucenter_url){
+        if (!this.forums.ucenter.ucenterAppid || !this.forums.ucenter.ucenterKey || !this.forums.ucenter.ucenterUrl){
           this.$message.error('请先填写配置再开启');
           return;
         }
@@ -129,7 +98,7 @@ export default {
         this.changeSettings('ucenter', status == '1' ? true : false, 'ucenter');
       } else {
         if(status == '1') {
-          if(!this.forums.passport.offiaccount_close){
+          if(!this.forums.passport.offiaccountOpen){
             this.$message.error('请先开启公众号配置');
             return;
           }
@@ -141,16 +110,14 @@ export default {
     changeSettings(typeVal,statusVal,TagVal){
       //登录设置状态修改
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-             "attributes":{
               "key":typeVal,
               "value":statusVal,
               "tag": TagVal
-             }
             }
            ]
         }
@@ -158,6 +125,10 @@ export default {
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({
             message: '修改成功',
             type: 'success'

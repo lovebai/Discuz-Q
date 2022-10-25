@@ -1,8 +1,8 @@
 <template>
   <div>
     <Card header="验证码配置"></Card>
-    <Card header="APPID：">
-      <CardRow description="腾讯云帐号 - 验证码 - APPID列表中，详情基础配置中的APPID">
+    <Card header="CaptchaAppId：">
+      <CardRow description="腾讯云帐号 - 验证码 - CaptchaAppId列表中，详情基础配置中的CaptchaAppId">
         <el-input v-model="appId" clearable></el-input>
         <template #tail>
           <a href="https://cloud.tencent.com/product/captcha" target="_blank">未申请？点此申请</a>
@@ -10,8 +10,8 @@
       </CardRow>
     </Card>
 
-    <Card header="App Secret Key：">
-      <CardRow description="腾讯云帐号 - 验证码 - APPID列表中，详情基础配置中的App Secret Key">
+    <Card header="AppSecretKey：">
+      <CardRow description="腾讯云帐号 - 验证码 - CaptchaAppId列表中，详情基础配置中的AppSecretKey">
         <el-input v-model="secretId" clearable></el-input>
       </CardRow>
     </Card>

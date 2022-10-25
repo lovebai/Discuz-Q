@@ -10,6 +10,7 @@ export default {
     return {
       options: [],
       username: '',
+      uickname: '',
       userUID: '',
       userRole: [],
       checked: false,
@@ -24,19 +25,19 @@ export default {
           label: '全部'
         },
         {
-          value: 'normal',
+          value: 0,
           label: '正常'
         },
         {
-          value: 'ban',
+          value: 1,
           label: '禁用'
         },
         {
-          value: 'mod',
+          value: 2,
           label: '审核'
         },
         {
-          value: 'refuse',
+          value: 3,
           label: '审核拒绝'
         }
       ],
@@ -64,6 +65,7 @@ export default {
     searchBtn() {
       let query = {
         username: this.username.trim(),
+        uickname: this.uickname.trim(),
         userUID: this.userUID.trim(),
         userRole: this.userRole,
         userStatus: this.userStatus,
@@ -77,7 +79,7 @@ export default {
         this.userWeChat = '';
         this.isReal = '';
 
-        if (query.username + query.userUID + query.userRole + query.userStatus === '') {
+        if (query.username + query.userUID + query.uickname + query.userRole + query.userStatus === '') {
           query = {};
         } else {
           delete query.userPhone;
@@ -91,17 +93,21 @@ export default {
     async getUserList() {
       try {
         const response = await this.appFetch({
-          method: 'get',
-          url: 'groups'
+          url: 'groups_list_get_v3',
+          method: 'get'
         });
         if (response.errors) {
           this.$message.error(response.errors[0].code);
         } else {
-          const data = response.data;
+          if (response.Code !== 0) {
+            this.$message.error(response.Message);
+            return
+          }
+          const data = response.Data;
           this.options = data.map((v) => {
             return {
               value: v.id,
-              label: v.attributes.name
+              label: v.name
             }
           })
         }

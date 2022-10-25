@@ -22,14 +22,43 @@ export default {
         miniDes: '',          //小程序描述
         systemList: '',       //系统通知数据
         wxList: '',           //微信通知数据
+        delayTime: '',        //自定义时间
         miniProgramList: '',  //小程序通知数据
         smsList: '',          //短信通知数据
         appletsList: [],      //keyword数组
+        pushTypeList: [],
+        customTypeList: '',
         smsKeyWord: [],       //短信keyword数组
         miniKeyWord: [],      //小程序keyword数组
         showClick: true,      //微信通知keyword超过五个不显示增加
         keyList: [],
-        miniTips:''
+        miniTips:'',
+        miniTips:'',
+        intervalTime: '',
+        text: '选择自定义推送时间后，可在配置项后边新增{X条}，则会展示一段时间内统计的消息数量 \n 示例：\n keyword1：你收到了点赞{X条}\n则推送消息为：keyword1：你收到了点赞X条',
+        delayTimeOptions: [
+          {
+            label: '秒',
+            value: 1
+          },
+          {
+            label: '分',
+            value: 2
+          },
+          {
+            label: '时',
+            value: 3
+          },
+          {
+            label: '天',
+            value: 4
+          },
+          {
+            label: '月',
+            value: 5
+          }
+        ],
+        delayTimeValue: 1,
       }
     },
     components: {
@@ -39,6 +68,7 @@ export default {
     },
     created() {
       this.query = this.$route.query;
+      this.typeStatus = this.$route.query.typeStatus;
       this.typeName = this.$route.query.typeName;
       this.noticeConfigure();
     },
@@ -76,22 +106,26 @@ export default {
       // 初始化配置列表信息
       noticeConfigure() {
         this.appFetch({
-          url: 'noticeDetail',
+          url: 'notices_detail_get_v3',
           method: 'get',
-          splice: `?type_name=${this.typeName}`,
+          splice: `?typeName=${this.typeName}`,
           data: {}
         }).then(res => {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           // 系统通知数据
-          if (res.readdata[0]) {
-            this.systemList = res.readdata[0]._data;
-            let vars = this.systemList.template_variables;
+          if (res.Data[0]) {
+            this.systemList = res.Data[0];
+            let vars = this.systemList.templateVariables;
             if (vars) {
               this.systemDes = '请输入模板消息详细内容对应的变量。关键字个数需与已添加的模板一致。\n\n可以使用如下变量：\n';
               for (let key in vars) {
                 this.systemDes += `${key} ${vars[key]}\n`;
               }
             }
-            if (this.systemList.status) {
+            if (this.systemList.status === 1) {
               !this.noticeList.includes("0") && this.noticeList.push("0")
               this.showSystem = true
             } else {
@@ -99,40 +133,66 @@ export default {
             }
           }
           // 微信模板通知
-          if (res.readdata[1]) {
-            this.wxList = res.readdata[1]._data;
-            let vars = this.wxList.template_variables;
+          if (res.Data[1]) {
+            this.wxList = res.Data[1];
+            let timeDelay = res.Data[1].delayTime;
+            if (timeDelay / 60 < 1) {
+              this.delayTime = timeDelay;
+              this.delayTimeValue = 1;
+            } else if (timeDelay / 60 / 60 < 1){
+              this.delayTime = timeDelay / 60;
+              this.delayTimeValue = 2;
+            } else if (timeDelay / 60 / 60 / 24 < 1) {
+              this.delayTime = timeDelay / 60 / 60;
+              this.delayTimeValue = 3;
+            } else if (timeDelay / 60 / 60 / 24 / 30 < 1) {
+              this.delayTime = timeDelay / 60 / 60 / 24;
+              this.delayTimeValue = 4
+            }else if (timeDelay / 60 / 60 / 24 / 30 / 12 < 1) {
+              this.delayTime = timeDelay / 60 / 60 / 24 / 30;
+              this.delayTimeValue = 5
+            }
+            let vars = this.wxList.templateVariables;
             if (vars) {
               this.wxDes = '请输入模板消息详细内容对应的变量。关键字个数需与已添加的模板一致。\n\n可以使用如下变量：\n';
               for (let key in vars) {
                 this.wxDes += `${key} ${vars[key]}\n`;
               }
             }
-            this.appletsList = this.wxList.keywords_data.length > 0
-              ? this.wxList.keywords_data
-              : ['', ''];
-              if (this.wxList.status) {
-                !this.noticeList.includes("1") && this.noticeList.push("1")
-                this.showWx = true;
-              } else {
-                this.showWx = false;
-              }
+            this.customTypeList = this.wxList.pushType;
+            if (this.wxList.pushType === 0) {
+              this.pushTypeList= this.wxList.keywordsData.length > 0
+                ? this.wxList.keywordsData
+                : ['', ''];
+            } else {
+              this.pushTypeList= this.wxList.keywordsData.length > 0
+              ? this.wxList.keywordsData
+              : [];
+            }
+            if (this.wxList.status === 1) {
+              !this.noticeList.includes("1") && this.noticeList.push("1")
+              this.showWx = true;
+            } else {
+              this.showWx = false;
+            }
+            this.appletsList = this.pushTypeList;
+            // this.customTypeList = this.pushTypeList;
           }
 
           // 短信通知
-          if (res.readdata[2]) {
-            this.smsList = res.readdata[2]._data;
-            this.smsKeyWord = this.smsList.keywords_data.length > 0
-              ? this.smsList.keywords_data
+          if (res.Data[2]) {
+            this.smsList = res.Data[2];
+            this.smsKeyWord = this.smsList.keywordsData.length > 0
+              ? this.smsList.keywordsData
               : [''];
-              let vars = this.smsList.template_variables;
+              let vars = this.smsList.templateVariables;
               if (vars) {
                 this.smsDes = '请输入模板消息详细内容对应的变量。关键字个数需与已添加的模板一致。\n\n可以使用如下变量：\n';
                 for (let key in vars) {
                   this.smsDes += `${key} ${vars[key]}\n`;
                 }
               }
-              if (this.smsList.status) {
+              if (this.smsList.status === 1) {
                 !this.noticeList.includes("2") && this.noticeList.push("2")
                 this.showSms = true;
               }else {
@@ -141,13 +201,13 @@ export default {
           }
 
           // 小程序通知
-          if (res.readdata[3]) {
-            this.miniProgramList = res.readdata[3]._data;
+          if (res.Data[3]) {
+            this.miniProgramList = res.Data[3];
             this.keyList = this.miniProgramList.keys;
-            this.miniKeyWord = this.miniProgramList.keywords_data.length > 0
-              ? this.miniProgramList.keywords_data
+            this.miniKeyWord = this.miniProgramList.keywordsData.length > 0
+              ? this.miniProgramList.keywordsData
               : ['', ''];
-              let vars = this.miniProgramList.template_variables;
+              let vars = this.miniProgramList.templateVariables;
               this.miniTips = '\n<a href="https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/subscribe-message/subscribeMessage.send.html" target="_blank">订阅消息参数值内容限制说明</a>填写错误将导致用户无法接收到消息通知'
               if (vars) {
                 this.miniDes = '请输入模板消息详细内容对应的变量。关键字个数需与已添加的模板一致。\n\n可以使用如下变量：\n';
@@ -155,7 +215,7 @@ export default {
                   this.miniDes += `${key} ${vars[key]}\n`;
                 }
               }
-              if (this.miniProgramList.status) {
+              if (this.miniProgramList.status === 1) {
                 !this.noticeList.includes("4") && this.noticeList.push("4")
                 this.showMini = true;
               }else {
@@ -164,35 +224,62 @@ export default {
           }
         })
       },
+      async getNoticesDetail (type, typeName) {
+        try {
+          const response = await this.appFetch({
+            url: 'notices_detail_get_v3',
+            method: 'get',
+            data: {
+              typeName,
+              type,
+            }
+          });
+          return response;
+        } catch (err) {
+  
+        }
+      },
       // 提交按钮
+      pushTypeCange(value) {
+        if (value === 1) {
+          if (value !== this.customTypeList) {
+            this.appletsList = [];
+          } else {
+            this.appletsList = this.pushTypeList;
+          }
+        }
+        if (value === 0) {
+          if (this.pushTypeList.length < 1 || value !== this.customTypeList) {
+            this.appletsList = ['', ''];
+          } else {
+            this.appletsList = this.pushTypeList;
+          }
+        }
+      },
       Submission() {
         let data = [];
         // 系统通知提交数据
         if (this.showSystem === true){
-          if (this.systemList.content === '') {
-            this.$message.error('请填写通知内容');
-            return;
-          }
+          // if (this.systemList.content === '') {
+          //   this.$message.error('请填写通知内容');
+          //   return;
+          // }
           data.push({
-            'attributes':{
-              "id": this.systemList.tpl_id,
-              "status": 1,
-              "template_id": this.systemList.template_id,
-              "title": this.systemList.title,
-              "content": this.systemList.content
-            }
+            "id": this.systemList.tplId,
+            "status": 1,
+            "templateId": this.systemList.templateId,
+            "title": this.systemList.title,
+            "content": this.systemList.content
           });
         } else {
           data.push({
-            'attributes':{
-              "id": this.systemList.tpl_id,
-              "status": 0,
-            }
+            "id": this.systemList.tplId,
+            "status": 0,
           });
         }
         // 微信通知提交数据
         if (this.showWx === true){
-          if (this.wxList.first_data === '') {
+          if (this.wxList.firstData === '' && this.wxList.pushType === 0) {
             this.$message.error('请填写first');
             return;
           }
@@ -205,35 +292,52 @@ export default {
             return;
             }
           }
-          if (this.wxList.remark_data === '') {
+          if (this.wxList.remarkData === '') {
             this.$message.error('请填写remark');
             return;
           }
+          let firstData = '';
+          if (this.wxList.pushType === 0) {
+            firstData = this.wxList.firstData;
+          }
+          let delayTimeValue = '';
+          switch (this.delayTimeValue) {
+            case 1: delayTimeValue = this.delayTime;
+              break;
+            case 2: delayTimeValue = this.delayTime * 60;
+              break;
+            case 3: delayTimeValue = this.delayTime * 60 * 60;
+              break;
+            case 4: delayTimeValue = this.delayTime * 60 * 60 * 24;
+              break;
+            case 5: delayTimeValue = this.delayTime * 60 * 60 * 24 * 30;
+              break;
+            default:
+              break;
+          }
           data.push({
-            'attributes':{
-              "id": this.wxList.tpl_id,
-              "status": 1,
-              "template_id": this.wxList.template_id,
-              "first_data": this.wxList.first_data,
-              "keywords_data": this.appletsList,
-              "remark_data": this.wxList.remark_data,
-              "redirect_type": this.wxList.redirect_type,
-              "redirect_url": this.wxList.redirect_url,
-              "page_path":this.wxList.page_path,
-            }
+            "id": this.wxList.tplId,
+            "status": 1,
+            "templateId": this.wxList.templateId,
+            "firstData": firstData,
+            "keywordsData": this.appletsList,
+            "remarkData": this.wxList.remarkData,
+            "redirectType": this.wxList.redirectType,
+            "redirectUrl": this.wxList.redirectUrl,
+            "pagePath":this.wxList.pagePath,
+            "pushType": this.wxList.pushType,
+            "delayTime": delayTimeValue,
           });
         } else {
           data.push({
-            'attributes':{
-              "id": this.wxList.tpl_id,
-              "status": 0,
-            }
+            "id": this.wxList.tplId,
+            "status": 0,
           });
         }
 
         // 短信通知提交数据
         if (this.showSms === true) {
-          if (this.smsList.template_id === '') {
+          if (this.smsList.templateId === '') {
             this.$message.error('请填写短信模版ID');
             return;
           }
@@ -247,26 +351,22 @@ export default {
             }
           }
           data.push({
-            'attributes':{
-              "id": this.smsList.tpl_id,
-              "status": 1,
-              "title": this.smsList.title,
-              "template_id": this.smsList.template_id,
-              "keywords_data": this.smsKeyWord,
-            }
+            "id": this.smsList.tplId,
+            "status": 1,
+            "title": this.smsList.title,
+            "templateId": this.smsList.templateId,
+            "keywordsData": this.smsKeyWord,
           });
         } else {
           data.push({
-            'attributes':{
-              "id": this.smsList.tpl_id,
-              "status": 0,
-            }
+            "id": this.smsList.tplId,
+            "status": 0,
           });
         }
 
       // 小程序订阅提交数据
       if (this.showMini === true) {
-        if (this.miniProgramList.template_id === '') {
+        if (this.miniProgramList.templateId === '') {
           this.$message.error('请填写小程序模版ID');
           return;
         }
@@ -278,34 +378,30 @@ export default {
             }
           }
         }
-         if (this.miniProgramList.page_path === '') {
+         if (this.miniProgramList.pagePath === '') {
           this.$message.error('请填写小程序路径');
           return;
         }
         data.push({
-          'attributes':{
-            "id": this.miniProgramList.tpl_id,
-            "status": 1,
-            "template_id": this.miniProgramList.template_id,
-            "title": this.miniProgramList.title,
-            "keywords_data": this.miniKeyWord,
-            "page_path": this.miniProgramList.page_path
-          }
+          "id": this.miniProgramList.tplId,
+          "status": 1,
+          "templateId": this.miniProgramList.templateId,
+          "title": this.miniProgramList.title,
+          "keywordsData": this.miniKeyWord,
+          "pagePath": this.miniProgramList.pagePath
         });
       } else {
         data.push({
-          'attributes':{
-            "id": this.miniProgramList.tpl_id,
-            "status": 0,
-          }
+          "id": this.miniProgramList.tplId,
+          "status": 0,
         });
       }
 
         this.appFetch({
-          url: 'noticeList',
-          method: 'patch',
+          url: 'notices_update_post_v3',
+          method: 'post',
           data: {
-            "data": data,
+            data,
           }
       }).then(res=>{
         if (res.errors) {
@@ -317,6 +413,10 @@ export default {
             this.$message.error(res.errors[0].code);
           }
           }else {
+            if (res.Code !== 0) {
+              this.$message.error(res.Message);
+              return
+            }
             this.$message({
               message: '提交成功',
               type: 'success'

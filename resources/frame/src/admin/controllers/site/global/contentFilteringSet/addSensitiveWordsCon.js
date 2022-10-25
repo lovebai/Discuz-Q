@@ -79,21 +79,22 @@ export default {
       }
       let wordsArr = this.textarea.split('\n')
         this.appFetch({
-        url:'batchSubmit',
-        method:'post',
-        standard:false,
-        data:{
-            "data": {
-              "type": "stop-words",
-              "words": wordsArr,
-              "overwrite":this.radio?true:false
-            }
+          url:'stopwords_batch_v3',
+          method:'post',
+          standard:false,
+          data:{
+            "words": wordsArr,
+            "overwrite":this.radio?true:false
           }
         }).then(res=>{
           if (res.errors){
             this.$message.error(res.errors[0].code);
           }else{
-          this.$message({message: '提交成功', type: 'success'});
+            if (res.Code !== 0) {
+              this.$message.error(res.Message);
+              return
+            }
+            this.$message({message: '提交成功', type: 'success'});
           }
         })
       },

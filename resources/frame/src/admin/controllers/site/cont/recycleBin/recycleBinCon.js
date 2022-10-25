@@ -8,7 +8,7 @@ import Page from '../../../../view/site/common/page/page';
 import tableNoList from '../../../../view/site/common/table/tableNoList';
 import webDb from 'webDbHelper';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
-
+import commonHelper from '../../../../../helpers/commonHelper';
 
 export default {
   data:function () {
@@ -55,7 +55,7 @@ export default {
       releaseTime: ['',''],       //发布时间范围
       deleteTime: ['',''],        //删除时间范围
 
-      radioList:'',               //主题左侧单选
+      // radioList:'',               //主题左侧单选
       deleteStatusList:[],        //硬删除列表
 
       appleAll:false,             //应用其他页面
@@ -78,7 +78,7 @@ export default {
       let urlList = [];
 
       list.forEach((item)=>{
-        urlList.push(item._data.url)
+        urlList.push(item.url)
       });
 
       this.url.push(urlList[imgIndex]);
@@ -102,21 +102,9 @@ export default {
       this.showViewer = false
     },
 
-    radioChange(val,index){
-      switch (val){
-        case '还原':
-          this.submitForm[index].attributes.isDeleted = false;
-          this.submitForm[index].hardDelete = false;
-          break;
-        case '删除':
-          this.submitForm[index].hardDelete = true;
-          break;
-        default:
-          //左侧操作错误，请刷新页面
-      }
-    },
-
     searchClick(){
+      this.releaseTime = this.releaseTime == null ? ['',''] : this.releaseTime;
+      this.deleteTime = this.deleteTime == null ? ['',''] : this.deleteTime;
       this.currentPaga = 1;
       this.getThemeList(1);
     },
@@ -130,55 +118,49 @@ export default {
 
     submitClick() {
       this.subLoading = true;
-
       this.deleteStatusList = [];
-      let isDeleted = [];
-
+      const submitData = [];
       this.submitForm.forEach((item,index)=>{
-        if (item.hardDelete){
-          this.deleteStatusList.push(item.id);
+        if (item.radio === '删除') {
+          submitData.push({
+            isDeleted: true,
+            id: item.id
+          })
         }
-        if (!item.attributes.isDeleted){
-          isDeleted.push(item.id)
+        if (item.radio === '还原') {
+          submitData.push({
+            isDeleted: false,
+            id: item.id
+          })
         }
       });
-
-      // this.deleteStatusList.forEach((item,index)=>{
-      //   if (index < this.deleteStatusList.length-1){
-      //     deleteStr = deleteStr + item + ','
-      //   }else {
-      //     deleteStr = deleteStr + item
-      //   }
-      // });
-
-      if (this.deleteStatusList.length > 0){
-        this.deleteThreadsBatch(this.deleteStatusList.join(','));
-      }
-      if (isDeleted.length > 0){
-        this.patchThreadsBatch(this.submitForm);
+      if (submitData.length > 0){
+        this.patchThreadsBatch(submitData)
       }
 
     },
 
     allOperationsSubmit(val){
       this.btnLoading = val;
-      let deleteStr = '';
+      let submitData = [];
       switch (val){
         case 1:
-          this.submitForm.forEach((item,index)=>{
-            this.submitForm[index].attributes.isDeleted = false;
+          this.submitForm.forEach(item => {
+            submitData.push({
+              isDeleted: false,
+              id: item.id
+            })
           });
-          this.patchThreadsBatch(this.submitForm);
+          this.patchThreadsBatch(submitData);
           break;
         case 2:
-          this.submitForm.forEach((item,index)=>{
-            if (index < this.submitForm.length-1){
-              deleteStr = deleteStr + item.id + ','
-            }else {
-              deleteStr = deleteStr + item.id
-            }
+          this.submitForm.forEach(item => {
+            submitData.push({
+              isDeleted: true,
+              id: item.id
+            })
           });
-          this.deleteThreadsBatch(deleteStr);
+          this.patchThreadsBatch(submitData);
           break;
         default:
           //全部还原或全部删除操作错误,请刷新页面
@@ -192,60 +174,51 @@ export default {
       return this.$dayjs(data).format('YYYY-MM-DD HH:mm')
     },
 
-
+    contentIndexes(data, val) {
+      return commonHelper.dataTypeJudgment(data, val);
+    },
+    filterContent(text) {
+      const emojis = webDb.getLItem('Emoji');
+      return commonHelper.convertEmoticon(text, emojis);
+    },
     /*
     * 接口请求
     * */
     getThemeList(pageNumber){
-      this.releaseTime = this.releaseTime == null?['','']:this.releaseTime;
-      this.deleteTime = this.deleteTime == null?['','']:this.deleteTime;
-      this.radioList = this.radioList == null?['','']:this.radioList;
-
       this.appFetch({
-        url:'threads',
+        url:'thread_get_v3',
         method:'get',
         data:{
-          include: ['user','firstPost','category','deletedUser','lastDeletedLog','firstPost.images','firstPost.attachments', 'threadVideo'],
-          // include:['user', 'firstPost', 'lastPostedUser','deletedUser', 'category','firstPost.images','firstPost.attachments'],
-          'filter[isDeleted]':'yes',
-          'filter[username]':this.searchUserName,
-          'page[number]':pageNumber,
-          'page[size]':10,
-          'filter[q]':this.keyWords,
-          // 'filter[categoryId]':this.categoriesListSelect,
-          'filter[categoryId]':this.categoriesListSelect[this.categoriesListSelect.length - 1],
-          'filter[deletedUsername]':this.operator,
-          'filter[createdAtBegin]':this.releaseTime[0],
-          'filter[createdAtEnd]':this.releaseTime[1],
-          'filter[deletedAtBegin]':this.deleteTime[0],
-          'filter[deletedAtEnd]':this.deleteTime[1],
-          'sort':'-deletedAt'
+          'isDeleted':'yes',
+          'nickname':this.searchUserName,
+          'page':pageNumber,
+          'perPage':10,
+          'q':this.keyWords,
+          'categoryId':this.categoriesListSelect[this.categoriesListSelect.length - 1],
+          'deletedNickname':this.operator,
+          'createdAtBegin':this.releaseTime[0],
+          'createdAtEnd':this.releaseTime[1],
+          'deletedAtBegin':this.deleteTime[0],
+          'deletedAtEnd':this.deleteTime[1],
+          'sort':'-deleted_at'
         }
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          this.themeList = res.readdata;
-          this.total = res.meta.threadCount;
-          this.pageCount = res.meta.pageCount;
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: data} = res;
+          this.themeList = data.pageData || [];
+          this.total = data.totalCount;
+          this.pageCount = data.totalPage;
           this.submitForm = [];
           this.themeList.forEach((item, index) => {
             this.submitForm.push({
               radio: '',
-              hardDelete: false,
-              type: 'threads',
-              id: item._data.id,
-              attributes: {
-                isDeleted: true
-              },
-              relationships: {
-                category: {
-                  data: {
-                    type: "categories",
-                    id: item.category._data.id
-                  }
-                }
-              }
+              id: item.threadId
             })
           });
         }
@@ -255,38 +228,36 @@ export default {
     },
     getCategories(){
       this.appFetch({
-        url:'categories',
+        url:'categories_get_v3',
         method:'get',
         data:{}
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
-          // this.categoriesList = [];
-          // res.data.forEach((item, index) => {
-          //   this.categoriesList.push({
-          //     name: item.attributes.name,
-          //     id: item.id
-          //   })
-          // })
-          res.data.forEach((item, index) => {
-            if (item.attributes.children.length) {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: data} = res;
+          data.forEach(item => {
+            if (item.children.length > 0) {
               const child = []
-              item.attributes.children.forEach(c => {
+              item.children.forEach(c => {
                 child.push({
                   label: c.name,
-                  value: c.search_ids
+                  value: c.searchIds
                 })
               })
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids,
+                label: item.name,
+                value: item.searchIds,
                 children: child
               })
             } else {
               this.categoriesList.push({
-                label: item.attributes.name,
-                value: item.attributes.search_ids
+                label: item.name,
+                value: item.searchIds
               })
             }
           })
@@ -297,9 +268,10 @@ export default {
     },
     patchThreadsBatch(data){
       this.appFetch({
-        url:'threadsBatch',
-        method:'patch',
+        url:'submit_review_post_v3',
+        method:'post',
         data:{
+          type: 1,
           data
         }
       }).then(res=>{
@@ -307,36 +279,11 @@ export default {
         this.btnLoading = 0;
         if (res.errors){
           this.$message.error(res.errors[0].code);
-        }else {
-          if (res.meta && res.data) {
-            this.$message.error('操作失败！');
-          } else {
-            this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
-            this.$message({
-              message: '操作成功',
-              type: 'success'
-            });
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
           }
-        }
-      }).catch(err=>{
-
-      })
-    },
-    deleteThreadsBatch(data){
-      this.appFetch({
-        url:'threadsBatch',
-        method:'delete',
-        splice:'/'+ data
-      }).then(res=>{
-        this.subLoading = false;
-        this.btnLoading = 0;
-        if (res.meta){
-          res.meta.forEach((item,index)=>{
-            setTimeout(()=>{
-              this.$message.error(item.code)
-            },(index+1) * 500);
-          });
-        }else {
           this.getThemeList(Number(webDb.getLItem('currentPag')) || 1);
           this.$message({
             message: '操作成功',
@@ -344,9 +291,9 @@ export default {
           });
         }
       }).catch(err=>{
+
       })
     },
-
     getCreated(state){
       if(state){
         this.getThemeList(1);

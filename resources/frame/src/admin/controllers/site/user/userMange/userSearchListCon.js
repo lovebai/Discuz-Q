@@ -53,6 +53,7 @@ export default {
       try {
         const {
           username,
+          uickname,
           userUID,
           userRole,
           userPhone,
@@ -62,26 +63,27 @@ export default {
         } = this.query;
         const response = await this.appFetch({
           method: "get",
-          url: 'users',
+          url: 'user_list_get_v3',
           data: {
+            "perPage": this.pageLimit,
+            "page": this.pageNum,
             "filter[username]": username,
+            "filter[nickname]": uickname,
             "filter[id]": userUID,
-            "filter[group_id][]": userRole,
+            "filter[groupId][]": userRole,
             "filter[mobile]": userPhone,
             "filter[status]": userStatus,
             "filter[wechat]": userWeChat,
-            "page[limit]": this.pageLimit,
-            "page[number]": this.pageNum,
             "filter[isReal]": isReal
           }
         });
         if (response.errors) {
           throw new Error(response.errors[0].code);
         } else {
-          this.total = response.meta.total;
+          this.total = response.Data.totalCount;
           // this.pageNum = response.meta.pageCount;
           // this.total = response.meta ? response.meta.total : 0;
-          this.tableData = response.readdata;
+          this.tableData = response.Data.pageData;
         }
       } catch (err) {
 
@@ -98,10 +100,11 @@ export default {
       try {
         let usersIdList = [];
         this.multipleSelection.forEach((v) => {
-          usersIdList.push(v._data.id)
+          usersIdList.push(v.userId)
         });
         const {
           username,
+          uickname,
           userUID,
           userRole,
           userPhone,
@@ -109,60 +112,64 @@ export default {
           userWeChat,
           isReal,
         } = this.query;
-        const response = await this.appFetch({
-          method: 'get',
-          url: 'exportUser',
-          splice: 'ids' + '=' + usersIdList,
-          data: {
+        let paramData = {};
+        if (this.tableData.length > 0) {
+          paramData = {
+            "ids": usersIdList.toString(),
             "filter[username]": username,
+            "filter[nickname]": uickname,
             "filter[id]": userUID,
-            "filter[group_id][]": userRole,
+            "filter[group_id]": userRole,
             "filter[mobile]": userPhone,
             "filter[status]": userStatus,
             "filter[wechat]": userWeChat,
             "filter[isReal]": isReal
-          },
+          }
+        }
+        const response = await this.appFetch({
+          method: 'get',
+          url: 'export_users_post_v3',
+          data: paramData,
           responseType: 'arraybuffer'
         });
-
         const blob = new Blob([response], { type: 'application/x-xls' });
         const url = window.URL || window.webkitURL || window.moxURL;
         const downloadHref = url.createObjectURL(blob);
         let a = document.createElement('a');
         a.href = downloadHref;
-        a.download = 'export.xlsx';
+        a.download = 'user_excel.xlsx';
         a.click();
         a = null;
       } catch (err) {
       }
     },
 
-    async deleteBatch() {
-      if (this.multipleSelection.length <= 0) {
-        return;
-      }
-      try {
-        let userIdList = [];
-        this.multipleSelection.forEach((v) => {
-          userIdList.push(v._data.id)
-        });
+    // async deleteBatch() {
+    //   if (this.multipleSelection.length <= 0) {
+    //     return;
+    //   }
+    //   try {
+    //     let userIdList = [];
+    //     this.multipleSelection.forEach((v) => {
+    //       userIdList.push(v._data.id)
+    //     });
 
-        await this.appFetch({
-          method: 'delete',
-          url: 'users',
-          data: {
-            "data": {
-              "attributes": {
-                "id": userIdList
-              }
-            }
-          }
-        });
+    //     await this.appFetch({
+    //       method: 'delete',
+    //       url: 'users',
+    //       data: {
+    //         "data": {
+    //           "attributes": {
+    //             "id": userIdList
+    //           }
+    //         }
+    //       }
+    //     });
 
-        this.handleGetUserList();
-      } catch (err) {
-      }
-    },
+    //     this.handleGetUserList();
+    //   } catch (err) {
+    //   }
+    // },
 		/**
 		 * 批量禁用
 		 * 日期 2020-02-11
@@ -186,18 +193,15 @@ export default {
           let dataList = [];
           this.multipleSelection.forEach((v) => {
             dataList.push({
-              "attributes": {
-                "id": v._data.id,
-                "groupId": v.groups[0] ? v.groups[0]._data.id : '',
-                "status": 1,
-                "refuse_message": value.value
-              }
+              "id": v.userId,
+              "status": 1,
+              "rejectReason": value.value
             })
           });
           // 进行后台请求
           this.appFetch({
-            method: 'PATCH',
-            url: 'users',
+            url: 'users_examine_post_v3',
+            method: 'post',
             data: {
               "data": dataList
             }
@@ -268,24 +272,29 @@ export default {
           return
         }
         // 获取当前行的对象值
-        const data = scope.row._data;
+        const data = scope.row;
         // 进行后台请求
         this.appFetch({
-          method: "PATCH",
-          url: 'users',
-          splice: `/${data.id}`,
+          url: 'users_examine_post_v3',
+          method: "post",
+          // splice: `/${data.id}`,
           data: {
-            "data": {
-              "attributes": {
+            "data": [
+              {
+                id: data.userId,
                 "status": 1,
-                "refuse_message": value.value
+                'rejectReason': value.value
               }
-            }
+            ]
           }
-        }).then(() => {
+        }).then(res => {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.handleGetUserList();
           //将禁用置灰
-          this.tableData[scope.$index]._data.status = 1;
+          this.tableData[scope.$index].status = 1;
         });
         // } catch(err){
         // }

@@ -15,14 +15,21 @@
 
           <el-table-column
             label="编号"
-            prop="_data.id"
+            prop="userId"
             width="100">
           </el-table-column>
 
           <el-table-column
-            prop="_data.username"
+            prop="username"
             label="用户名"
             width="200">
+          </el-table-column>
+          
+          <el-table-column
+            prop="nickname"
+            label="用户昵称"
+            width="200"
+            >
           </el-table-column>
 
           <!-- <el-table-column
@@ -35,11 +42,11 @@
           <el-table-column
             width="200"
             label="注册时间">
-            <template slot-scope="scope">{{ formatDate(scope.row._data.createdAt) }}</template>
+            <template slot-scope="scope">{{ formatDate(scope.row.createdAt) }}</template>
           </el-table-column>
           
           <el-table-column
-            prop="_data.originalMobile"
+            prop="mobile"
             label="手机号"
             width="150">
           </el-table-column>
@@ -62,10 +69,10 @@
                     <el-table-column
                       class="user-review-table__trbox"
                       label="字段名称"
-                      prop="_data.name"
+                      prop="name"
                       width="100">
                        <template slot-scope="scope">
-                         <div class="user-review-table__tdbox">{{scope.row._data.name}}</div>
+                         <div class="user-review-table__tdbox">{{scope.row.name}}</div>
                        </template>
                     </el-table-column>
 
@@ -74,14 +81,14 @@
                       width="571">
                       <template slot-scope="scopes">
                         <div class="user-review-table__exdent">
-                            <p v-if="scopes.row._data.type === 0 || scopes.row._data.type === 1">
-                                {{ scopes.row._data.fields_ext }}
+                            <p v-if="scopes.row.type === 0 || scopes.row.type === 1">
+                                {{ scopes.row.fieldsExt }}
                             </p>
-                            <p v-if="scopes.row._data.type === 2 || scopes.row._data.type === 3">
-                                {{ optionFun(scopes.row._data.fields_ext)}}
+                            <p v-if="scopes.row.type === 2 || scopes.row.type === 3">
+                                {{ optionFun(scopes.row.fieldsExt)}}
                             </p>
-                            <div v-if="scopes.row._data.type === 4 || scopes.row._data.type === 5">
-                              <p v-for="(iamge, indexImg) in scopes.row._data.fields_ext" :key="indexImg">
+                            <div v-if="scopes.row.type === 4 || scopes.row.type === 5">
+                              <p v-for="(iamge, indexImg) in scopes.row.fieldsExt" :key="indexImg">
                                 <a :href="iamge.url"  target="_blank">{{ iamge.name }}</a>
                               </p>
                             </div>
@@ -124,8 +131,8 @@
             label="操作"
             width="230">
             <template slot-scope="scope">
-              <el-button type="text" @click="singleOperation('pass',scope.row._data.id, scope)" >通过</el-button>
-              <el-button type="text" @click="singleOperation('no',scope.row._data.id, scope)" >否决</el-button>
+              <el-button type="text" @click="singleOperation('pass',scope.row.userId, scope)" >通过</el-button>
+              <el-button type="text" @click="singleOperation('no',scope.row.userId, scope)" >否决</el-button>
 
               <el-popover
                 width="100"
@@ -135,7 +142,7 @@
                 <div style="text-align: right; margin: 10PX 0 0 0 ">
                   <el-button type="text" size="mini" @click="scope._self.$refs[`popover-${scope.$index}`].doClose()">取消</el-button>
 
-                  <el-button type="danger" size="mini" @click="singleOperation('del',scope.row._data.id);scope._self.$refs[`popover-${scope.$index}`].doClose()" >确定</el-button>
+                  <el-button type="danger" size="mini" @click="singleOperation('del',scope.row.id);scope._self.$refs[`popover-${scope.$index}`].doClose()" >确定</el-button>
                 </div>
                 <!-- <el-button type="text" slot="reference">删除</el-button> -->
               </el-popover>

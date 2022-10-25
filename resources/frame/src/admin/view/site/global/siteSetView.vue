@@ -76,10 +76,23 @@
         </Card>
 
         <Card header="到期时间：">
-          <CardRow description="付费模式下，付费成为站点默认角色，可维持的时间，不填或为0时不限制">
-            加入起
-            <el-input class="elinput" style="height: 36PX;width: 80PX" clearable placeholder="天数" type="number"
-              v-model="siteExpire"></el-input>天后
+          <CardRow description="付费模式下，付费成为站点默认角色的有效时间">
+            <el-radio v-model="expireRadio" label="1">
+              加入起
+              <el-input
+                class="elinput"
+                style="height: 36PX;width: 160PX"
+                placeholder="天数"
+                type="number"
+                size="small"
+                v-model="siteExpire"
+                @blur.native.capture="onExpireBlurFun"
+              ></el-input>天后
+            </el-radio>
+            <el-radio
+              v-model="expireRadio"
+              label="2"
+            >永久有效</el-radio>
           </CardRow>
         </Card>
       </div>
@@ -98,21 +111,6 @@
         </div>
       </CardRow>
     </Card>
-
-    <Card header="问答围观价格：">
-      <div class="record-top">
-        <CardRow description="问答围观的价格，平台先分成，剩下的提问者和回答者对半分，不填或为0时不允许设置围观">
-          <el-input v-model="askPrice"></el-input>
-        </CardRow>
-      </div>
-    </Card>
-
-    <!-- <Card header="权限购买">
-      <CardRow class="card-pays" description="开启后，用户角色将可以配置价格和有效期，用户可在前台进行用户角色购买">
-        <el-switch v-model="purchase" active-color="#336699" inactive-color="#bbbbbb">
-        </el-switch>
-      </CardRow>
-    </Card> -->
 
     <Card header="网站备案信息：">
       <div class="record-top">
@@ -138,18 +136,28 @@
 
     <Card header="站点开关：" class="card-radio-con">
       <CardRow description="站点当前开放的可访问的端，勾选则代表开启">
-        <!-- <el-radio @change="radioChangeClose('1')" v-model="radio2" label="1">是</el-radio>
-        <el-radio @change="radioChangeClose('2')" v-model="radio2" label="2">否</el-radio> -->
+        <el-radio @change="radioChangeClose('1')" v-model="radio2" label="1">关闭</el-radio>
+        <el-radio @change="radioChangeClose('2')" v-model="radio2" label="2">开启</el-radio>
 
-        <el-checkbox-group @change="closeListChange" v-model="closeSelectList">
+        <!-- <el-checkbox-group @change="closeListChange" v-model="closeSelectList">
           <el-checkbox v-for="item in closeList" :key="item.key" :label="item.key">
             {{ item.desc }}
           </el-checkbox>
-        </el-checkbox-group>
+        </el-checkbox-group> -->
       </CardRow>
     </Card>
 
     <el-collapse-transition>
+      <div v-show="radio2 === '1'">
+        <Card header>
+          <CardRow description="站点关闭时出现的提示信息">
+            <el-input v-model="siteCloseMsg"></el-input>
+          </CardRow>
+        </Card>
+      </div>
+    </el-collapse-transition>
+
+    <!-- <el-collapse-transition>
       <div v-show="changeCloseList">
         <Card header>
           <CardRow description="未开启且被访问时的提示信息">
@@ -157,7 +165,7 @@
           </CardRow>
         </Card>
       </div>
-    </el-collapse-transition>
+    </el-collapse-transition> -->
 
     <Card class="footer-btn">
       <el-button type="primary" size="medium" @click="siteSetPost">提交</el-button>

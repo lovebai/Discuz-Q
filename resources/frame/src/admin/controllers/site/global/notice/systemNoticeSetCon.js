@@ -24,55 +24,28 @@ export default {
     getNoticeList() {
       //初始化通知设置列表
       this.appFetch({
-        url: "noticeList",
+        url: "notices_get_v3",
         method: "get",
         data: {
-          "page[number]": this.pageNum,
-          "page[size]": this.pageLimit
+          "page": this.pageNum,
+          "perPage": this.pageLimit
         }
       })
         .then(res => {
           if (res.errors) {
             this.$message.error(res.errors[0].code);
           } else {
-            this.tableData = res.readdata;
-            this.total = res.meta.total;
+            if (res.Code !== 0) {
+              this.$message.error(res.Message);
+              return
+            }
+            const {Data: data} = res;
+            this.tableData = data.pageData || [];
+            this.total = data.totalCount;
           }
         })
         .catch(err => {});
     },
-    noticeSetting(id, actionName) {
-      //修改开启状态
-      let statusTemp = 1; // 默认开启状态
-      if (actionName == "close") {
-        statusTemp = 0;
-      } else if (actionName == "open") {
-        statusTemp = 1;
-      }
-      this.appFetch({
-        url: "notification",
-        method: "patch",
-        splice: id,
-        data: {
-          data: {
-            attributes: {
-              status: statusTemp
-            }
-          }
-        }
-      }).then(res => {
-        if (res.errors) {
-          this.$message.error(res.errors[0].code);
-        } else {
-          this.$message({
-            message: "修改成功",
-            type: "success"
-          });
-          this.getNoticeList();
-        }
-      });
-    },
-
     //获取表格序号
     getIndex($index) {
       //表格序号
@@ -82,28 +55,28 @@ export default {
       this.pageNum = val;
       this.getNoticeList();
     },
-    configClick(id,typeName) {
+    configClick(typeStatus, typeName) {
       //点击配置跳到对应的配置页面
       this.$router.push({
         path: "/admin/notice-configure",
-        query: { id: id,typeName: typeName }
+        query: { typeStatus: typeStatus, typeName: typeName }
       });
     },
     // 通知类型的点击事件
     handleError(item) {
-      if (item.is_error === 1) {
-        let json = item.error_msg;
+      if (item.isError === 1) {
+        let json = item.errorMsg;
 
         this.$alert(`
           <div class="notice_error_info">
             <div class="notice_error_title">Code</div>
-            <div class="notice_error_message">${json.err_code}</div>
+            <div class="notice_error_message">${json.errCode}</div>
           </div>
           <div class="notice_error_info">
             <div class="notice_error_title">Message</div>
-            <div class="notice_error_message">${json.err_msg}</div>
+            <div class="notice_error_message">${json.errMsg}</div>
           </div>`,
-          `${json.type_name}（${item.type}）`, {
+          `${json.typeName}（${item.type}）`, {
           dangerouslyUseHTMLString: true,
         }).catch(() => {
           console.log('点击了关闭')

@@ -2,17 +2,18 @@ import Card from "../../../view/site/common/card/card";
 import CardRow from "../../../view/site/common/card/cardRow";
 
 export default {
-  data: function() {
+  data: function () {
     return {
       // 关闭站点
       closeList: [],
       closeSelectList: [],
       radio: "1",
-      // radio2: "2",
+      radio2: "2",
+      expireRadio: "1",
       // fileList:[],
       loading: true,
       fullscreenLoading: false,
-      siteTheme: 1,
+      // siteTheme: 1,
       siteName: "",
       siteIntroduction: "",
       siteKeywords: "",
@@ -35,9 +36,6 @@ export default {
       fileList: [],
       deleBtn: false,
       disabled: true, // 付费模式置灰
-      askPrice: "", // 问答围观价格
-      // purchase: false, // 权限购买
-      purchaseNum: 0,
       numberimg: [
         {
           imageUrl: "",
@@ -71,7 +69,10 @@ export default {
     };
   },
 
-  created: function() {
+  // 默认有效时间
+  defaultExprie: 6,
+
+  created: function () {
     //初始化请求设置
     this.loadStatus();
   },
@@ -83,12 +84,12 @@ export default {
       return this.closeSelectList.length != this.closeList.length;
     }
   },
-
+  
   methods: {
     loadStatus() {
       //初始化设置
       this.appFetch({
-        url: "forum",
+        url: 'forum_get_v3',
         method: "get",
         data: {}
       })
@@ -96,81 +97,90 @@ export default {
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
-            console.log(data)
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
+            const {Data: forumData} = data;
             // 微信支付关闭时置灰付费模式
-            if (data.readdata._data.paycenter.wxpay_close == false) {
+            if (forumData.paycenter.wxpayClose == false) {
               this.disabled = true;
             } else {
               this.disabled = false;
             }
+            // 付费加入永久有效判断
+            if (forumData.setSite.siteExpire === '') {
+              this.expireRadio = '2';
+            } else {
+              this.expireRadio = '1';
+            }
             // logo size
-            this.siteTheme = data.readdata._data.set_site.site_skin;
-            this.numberimg[0].textrule = this.siteTheme === 1
-              ? "尺寸：438px*88px"
-              : "尺寸：300px*100px";
-            this.siteName = data.readdata._data.set_site.site_name;
+            // this.siteTheme = forumData.setSite.site_skin;
+            // this.numberimg[0].textrule = this.siteTheme === 1
+            //   ? "尺寸：438px*88px"
+            //   : "尺寸：300px*100px";
+            this.siteName = forumData.setSite.siteName;
             this.siteIntroduction =
-              data.readdata._data.set_site.site_introduction;
-            this.siteKeywords = data.readdata._data.set_site.site_keywords;
-            this.siteTitle = data.readdata._data.set_site.site_title;
-            this.siteMode = data.readdata._data.set_site.site_mode;
-            this.numberimg[0].imageUrl = data.readdata._data.set_site.site_logo;
+              forumData.setSite.siteIntroduction;
+            this.siteKeywords = forumData.setSite.siteKeywords;
+            this.siteTitle = forumData.setSite.siteTitle;
+            this.siteMode = forumData.setSite.siteMode;
+            this.numberimg[0].imageUrl = forumData.setSite.siteLogo;
             this.numberimg[1].imageUrl =
-              data.readdata._data.set_site.site_header_logo;
+              forumData.setSite.siteHeaderLogo;
             this.numberimg[2].imageUrl =
-              data.readdata._data.set_site.site_background_image;
+              forumData.setSite.siteBackgroundImage;
             // icon
             this.numberimg[3].imageUrl =
-              data.readdata._data.set_site.site_favicon;
+              forumData.setSite.siteFavicon;
             if (this.siteMode == "pay") {
               this.radio = "2";
             } else {
               this.radio = "1";
             }
-            this.sitePrice = data.readdata._data.set_site.site_price;
-            this.siteExpire = data.readdata._data.set_site.site_expire;
+            this.sitePrice = forumData.setSite.sitePrice;
+            this.siteExpire = forumData.setSite.siteExpire || 6;
+            this.defaultExprie = forumData.setSite.siteExpire || 6;
             this.siteAuthorScale =
-              data.readdata._data.set_site.site_author_scale;
+              forumData.setSite.siteAuthorScale;
             this.siteMasterScale =
-              data.readdata._data.set_site.site_master_scale;
-            // this.siteLogoFile = data.readdata._data.siteLogoFile;
-            this.siteRecord = data.readdata._data.set_site.site_record;
-            this.recodeNumber = data.readdata._data.set_site.site_record_code;
-            this.siteStat = data.readdata._data.set_site.site_stat;
+              forumData.setSite.siteMasterScale;
+            // this.siteLogoFile = forumData.siteLogoFile;
+            this.siteRecord = forumData.setSite.siteRecord;
+            this.recodeNumber = forumData.setSite.siteRecordCode;
+            this.siteStat = forumData.setSite.siteStat;
 
             if (
-              data.readdata._data.set_site.site_author &&
-              data.readdata._data.set_site.site_author.id
+              forumData.setSite.siteAuthor &&
+              forumData.setSite.siteAuthor.id
             ) {
-              this.siteMasterId = data.readdata._data.set_site.site_author.id;
+              this.siteMasterId = forumData.setSite.siteAuthor.id;
             }
 
-            this.askPrice = data.readdata._data.set_site.site_onlooker_price;
-            // if (data.readdata._data.logo) {
-            //   this.fileList.push({url: data.readdata._data.logo});
+            // if (forumData.logo) {
+            //   this.fileList.push({url: forumData.logo});
             // }
 
             // 旧关闭站点
-            // this.siteClose = data.readdata._data.set_site.site_close;
-            // if (this.siteClose === true) {
-            //   this.radio2 = "1";
-            // } else {
-            //   this.radio2 = "2";
-            // }
+            this.siteClose = forumData.setSite.siteClose;
+            if (this.siteClose === true) {
+              this.radio2 = "1";
+            } else {
+              this.radio2 = "2";
+            }
             // 新的关闭站点
+            // console.log(data);
+            // this.closeList = forumData.setSite.site_manage || [];
+            // this.closeSelectList = this.closeList.reduce((result, item) => {
+            //   if (item.value) {
+            //     result.push(item.key);
+            //   }
+            //   return result;
+            // }, []);
 
-            this.closeList = data.readdata._data.set_site.site_manage || [];
-            this.closeSelectList = this.closeList.reduce((result, item) => {
-              if (item.value) {
-                result.push(item.key);
-              }
-              return result;
-            }, []);
-
-            this.siteCloseMsg = data.readdata._data.set_site.site_close_msg;
-            // this.purchase = !!Number(data.readdata._data.set_site.site_pay_group_close);
+            this.siteCloseMsg = forumData.setSite.siteCloseMsg;
             // 微信支付关闭时置灰付费模式
-            if (data.readdata._data.paycenter.wxpay_close == false) {
+            if (forumData.paycenter.wxpayClose == false) {
               this.disabled = true;
             } else {
               this.disabled = false;
@@ -205,7 +215,7 @@ export default {
             });
           }
         })
-        .catch(error => {});
+        .catch(error => { });
     },
     //删除已上传logo
     deleteImage(file, index, fileList) {
@@ -228,20 +238,24 @@ export default {
       }
       this.numberimg[index].imageUrl = "";
       this.appFetch({
-        url: "logo",
-        method: "delete",
+        url: "delete_logo_post_v3",
+        method: "post",
         data: {
           type: type
         }
       })
         .then(data => {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
             this.$message("删除成功");
           }
         })
-        .catch(error => {});
+        .catch(error => { });
     },
     handlePictureCardPreview(file) {
       this.dialogImageUrl = file.url;
@@ -264,7 +278,7 @@ export default {
     handleAvatarSuccess(res, file) {
       // this.imageUrl = URL.createObjectURL(file.raw);
     },
-    handleFile() {},
+    handleFile() { },
     getScaleImgSize(url, obj) {
       if (url === "") {
         return;
@@ -300,7 +314,6 @@ export default {
         };
         img.src = url;
         img.onerror = reject;
-        console.log(url);
       });
     },
 
@@ -310,7 +323,7 @@ export default {
         file.type == "image/jpeg" ||
         file.type == "image/png" ||
         file.type == "image/gif" ||
-        file.type == "image/ico"  ||
+        file.type == "image/ico" ||
         file.type == "image/vnd.microsoft.icon" ||
         file.type == "image/x-icon";
       const isLt2M = file.size / 1024 / 1024 < 2;
@@ -347,7 +360,7 @@ export default {
       logoFormData.append("logo", e.file);
       logoFormData.append("type", type);
       this.appFetch({
-        url: "logo",
+        url: "settings_logo_post_v3",
         method: "post",
         data: logoFormData
       })
@@ -355,7 +368,11 @@ export default {
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
-            this.numberimg[index].imageUrl = data.readdata._data.default.logo;
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
+            this.numberimg[index].imageUrl = data.Data.value;
             this.getScaleImgSize(this.numberimg[index].imageUrl, {
               width: 140,
               height: 140
@@ -366,147 +383,114 @@ export default {
             this.$message({ message: "上传成功", type: "success" });
           }
         })
-        .catch(error => {});
+        .catch(error => { });
     },
     siteSetPost() {
+      if(this.radio === '2' && this.expireRadio === '1' && !this.siteExpire) {
+        this.$message({
+          message: "有效时间必须大于等于1，小于等于1000000",
+          type: "error"
+        });
+        return
+      }
 
       const closeData = this.closeList.map((item) => {
         item.value = this.closeSelectList.indexOf(item.key) != - 1;
         return item;
       })
+
+      const params = [
+        {
+          key: "site_name",
+          value: this.siteName ? this.siteName : "",
+          tag: "default"
+        },
+        {
+          key: "site_introduction",
+          value: this.siteIntroduction ? this.siteIntroduction : "",
+          tag: "default"
+        },
+        {
+          key: "site_keywords",
+          value: this.siteKeywords ? this.siteKeywords : "",
+          tag: "default"
+        },
+        {
+          key: "site_title",
+          value: this.siteTitle ? this.siteTitle : "",
+          tag: "default"
+        },
+        {
+          key: "site_author",
+          value: this.siteMasterId,
+          tag: "default"
+        },
+        {
+          key: "site_mode",
+          value: this.siteMode,
+          tag: "default"
+        },
+        {
+          key: "site_price",
+          value: this.sitePrice,
+          tag: "default"
+        },
+        {
+          key: "site_author_scale",
+          value: this.siteAuthorScale,
+          tag: "default"
+        },
+        {
+          key: "site_master_scale",
+          value: this.siteMasterScale,
+          tag: "default"
+        },
+        {
+          key: "site_record",
+          value: this.siteRecord,
+          tag: "default"
+        },
+        {
+          key: "site_record_code",
+          value: this.recodeNumber,
+          tag: "default"
+        },
+        {
+          key: "site_stat",
+          value: this.siteStat,
+          tag: "default"
+        },
+        {
+          key: "site_close",
+          value: this.siteClose,
+          tag: "default"
+        },
+        {
+          key: "site_manage",
+          value: closeData,
+          tag: "default"
+        },
+        {
+          key: "site_close_msg",
+          value: this.siteCloseMsg,
+          tag: "default"
+        },
+      ];
+
+      if(this.siteMode === 'pay') {
+        params.push({
+          key: "site_expire",
+          value: this.expireRadio === "2"  ? 0 : this.siteExpire,
+          tag: "default"
+        },)
+      }
+
       this.appFetch({
-        url: "settings",
+        url: "settings_post_v3",
         method: "post",
         data: {
-          data: [
-            {
-              attributes: {
-                key: "site_name",
-                value: this.siteName ? this.siteName : "",
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_introduction",
-                value: this.siteIntroduction ? this.siteIntroduction : "",
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_keywords",
-                value: this.siteKeywords ? this.siteKeywords : "",
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_title",
-                value: this.siteTitle ? this.siteTitle : "",
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_author",
-                value: this.siteMasterId,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_mode",
-                value: this.siteMode,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_price",
-                value: this.sitePrice,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_expire",
-                value: this.siteExpire,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_author_scale",
-                value: this.siteAuthorScale,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_master_scale",
-                value: this.siteMasterScale,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_record",
-                value: this.siteRecord,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_record_code",
-                value: this.recodeNumber,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_stat",
-                value: this.siteStat,
-                tag: "default"
-              }
-            },
-            // {
-            //   attributes: {
-            //     key: "site_close",
-            //     value: this.siteClose,
-            //     tag: "default"
-            //   }
-            // },
-            {
-              attributes: {
-                key: "site_manage",
-                value: closeData,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_close_msg",
-                value: this.siteCloseMsg,
-                tag: "default"
-              }
-            },
-            {
-              attributes: {
-                key: "site_onlooker_price",
-                value: this.askPrice,
-                tag: "default"
-              }
-            },
-            // {
-            //   attributes: {
-            //     key: "site_pay_group_close",
-            //     value: this.purchase,
-            //     tag: "default"
-            //   }
-            // }
-          ]
-        }
+          data: params
+        },
       })
         .then(data => {
           if (data.errors) {
@@ -518,13 +502,17 @@ export default {
               this.$message.error(data.errors[0].code);
             }
           } else {
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
             this.$message({
               message: "提交成功",
               type: "success"
             });
           }
         })
-        .catch(error => {});
+        .catch(error => { });
     },
     onblurFun() {
       if (this.siteAuthorScale == null || this.siteAuthorScale == "") {
@@ -538,6 +526,16 @@ export default {
       if (countRes != 10) {
         this.$message({
           message: "分成比例相加必须为10",
+          type: "error"
+        });
+      }
+    },
+    onExpireBlurFun() {
+      var countRes = parseFloat(this.siteExpire);
+      if (!(countRes >= 1 && countRes <= 1000000)) {
+        this.siteExpire = '';
+        this.$message({
+          message: "有效时间必须大于等于1，小于等于1000000",
           type: "error"
         });
       }

@@ -2,7 +2,7 @@
 
 @import "../common/index";
 @import "../../../../../static/css/admin/discuzQfont.css";
-
+@import "../../../../../static/css/iconfont/iconfont.css";
 
 /*
   公共样式
@@ -39,7 +39,9 @@
   }
 
 }
+.el-message-box__wrapper {
 
+}
 
 /*
   用户管理
@@ -191,6 +193,38 @@
     word-break: keep-all;
     overflow: hidden;
   }
+  .user-details-masks {
+    // background: #606266;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(41, 36, 33, 0.5);
+  }
+  .invite-users {
+    display: flex;
+    &-subscript {
+      line-height: 36PX;
+      margin-right: 20PX;
+    }
+    &-head {
+      width: 36PX;
+      height: 36PX;
+      border-radius: 50%;
+      img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+      }
+    }
+    &-name {
+      width: 200PX;
+      margin: 0 30PX;
+      line-height: 36PX;
+    }
+    &-time {
+      line-height: 36PX;
+    }
+  }
 }
 
 
@@ -224,6 +258,37 @@
 
   .user-rol-table{
     margin-top: 15PX;
+    &-box {
+      width: 100PX;
+      display: flex;
+      justify-content: space-between;
+      span {
+        width: 25PX;
+        height: 25PX;
+        text-align: center;
+        line-height: 25PX;
+        display: block;
+        cursor: pointer;
+        .table-icon {
+          margin: 0;
+        }
+      }
+    }
+    &__frame {
+      border: solid 1PX #606266;
+    }
+    &__right {
+      margin-left: 73PX;
+    }
+    &__rights {
+      margin-left: 75PX;
+    }
+    .table-icon {
+      font-size: 20PX;
+    }
+    &__pay {
+      margin-bottom: 20PX;
+    }
   }
 
   /*.user-rol-table-add{
@@ -248,6 +313,9 @@
 
 }
 
+.el-table .success-row {
+  background: #fffcd9;
+}
 
 /*
   用户角色权限设置
@@ -330,8 +398,84 @@
       width: 340PX;
     }
   }
+  .invita-box {
+    .card-box__main {
+      display: flex;
+    }
+    .invita-box-text {
+      width: 45%;
+      .card-row-lf{
+        width: 100%;
+        height: 40PX;
+        line-height: 40PX;
+      }
+      .card-row-rf{
+        display: none;
+      }
+    }
+    .el-input__inner {
+      width: 100PX;
+    }
+    .el-select {
+      margin-right: 20PX;
+    }
+  }
   .footer-btn__inner{
     padding-left: 27PX;
+  }
+  .user-pay {
+    // padding-left: 27PX;
+    &__title {
+      background-color: #FAFAFA;
+      height: 53PX;
+      line-height: 53PX;
+      padding-left: 27PX;
+    }
+    &-money {
+      padding-left: 27PX;
+      &__left {
+        display: inline-block;
+        width: 100PX;
+      }
+      &__right {
+        display: inline-block;
+        margin-left: 20PX;
+      }
+    }
+    &-introduce {
+      padding-left: 27PX;
+      .card-box__main {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      &__left {
+        width: 100PX;
+        margin-right: 10PX;
+      }
+      &__btn {
+        width: 100%;
+        margin-top: 10PX;
+        text-align: right;
+        color: #909399;
+      }
+    }
+    &-explain {
+      padding-left: 27PX;
+      &__title {
+        font-size: 14PX;
+        font-weight: bold;
+        margin-bottom: 20PX;
+      }
+      &__content {
+        line-height: 30PX;
+      }
+    }
+    .el-textarea {
+      width: 500PX;
+      .el-textarea__inner {
+        height: 125PX;
+      }
+    }
   }
 }
 .elinput{

@@ -22,7 +22,7 @@ export default {
     loadStatus(){
       //初始化登录设置状态
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{
         }
@@ -30,8 +30,13 @@ export default {
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
-          this.siteMode = data.readdata._data.set_site.site_mode;
-          if (data.readdata._data.paycenter.wxpay_close == '0') {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
+          const {Data: forumData} = data;
+          this.siteMode = forumData.setSite.siteMode;
+          if (forumData.paycenter.wxpayClose == '0') {
             this.settingStatus[0].status = false;
           } else {
             this.settingStatus[0].status = true;
@@ -71,24 +76,25 @@ export default {
     changeSettings(typeVal,statusVal,TagVal,Tips){
       //登录设置状态修改
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-             "attributes":{
               "key":typeVal,
               "value":statusVal,
               "tag": TagVal
-             }
             }
            ]
-
         }
       }).then(data=>{
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           if (Tips == 'true') {
             this.$message({
               message: '修改成功',

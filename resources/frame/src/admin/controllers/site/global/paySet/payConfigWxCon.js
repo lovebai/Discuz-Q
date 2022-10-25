@@ -24,19 +24,24 @@ export default {
     loadStatus(){
       //初始化
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{}
       }).then(data=>{
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
-          this.appId = data.readdata._data.paycenter.app_id;
-          this.mchId = data.readdata._data.paycenter.mch_id;
-          this.apiKey = data.readdata._data.paycenter.api_key;
-          this.appSecret = data.readdata._data.paycenter.app_secret;
-          this.iOSPay = data.readdata._data.paycenter.wxpay_ios;
-          this.value = data.readdata._data.paycenter.wxpay_mchpay_close;
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
+          const {Data: forumData} = data;
+          this.appId = forumData.paycenter.appId;
+          this.mchId = forumData.paycenter.mchId;
+          this.apiKey = forumData.paycenter.apiKey;
+          this.appSecret = forumData.paycenter.appSecret;
+          this.iOSPay = forumData.paycenter.wxpayIos;
+          this.value = forumData.paycenter.wxpayMchpayClose;
         }
       }).catch(error=>{
       })
@@ -44,61 +49,50 @@ export default {
     submitConfiguration(){
 
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-               "attributes":{
-                "key":"app_id",
-                "value":this.appId,
-                "tag": this.type
-               }
+              "key":"app_id",
+              "value":this.appId,
+              "tag": this.type
             },
             {
-               "attributes":{
-                "key":"mch_id",
-                "value":this.mchId,
-                "tag": this.type
-               }
+              "key":"mch_id",
+              "value":this.mchId,
+              "tag": this.type
             },
             {
-               "attributes":{
-                "key":"api_key",
-                "value":this.apiKey,
-                "tag": this.type
-               }
+              "key":"api_key",
+              "value":this.apiKey,
+              "tag": this.type
             },
             {
-               "attributes":{
-                "key":"app_secret",
-                "value":this.appSecret,
-                "tag": this.type
-               }
+              "key":"app_secret",
+              "value":this.appSecret,
+              "tag": this.type
             },
             {
-               "attributes":{
-                "key":"wxpay_ios",
-                "value":this.iOSPay,
-                "tag": this.type
-               }
+              "key":"wxpay_ios",
+              "value":this.iOSPay,
+              "tag": this.type
             },
             {
-              "attributes":{
-               "key":"wxpay_mchpay_close",
-               "value":this.value,
-               "tag": this.type
-              }
-           },
-           ]
+              "key":"wxpay_mchpay_close",
+              "value":this.value,
+              "tag": this.type
+            },
+          ]
         }
       }).then(data=>{
-        // this.$router.push({
-        //   path:'/admin/pay-set'
-        // });
         if (data.errors){
           this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({
             message: '提交成功',
             type: 'success'

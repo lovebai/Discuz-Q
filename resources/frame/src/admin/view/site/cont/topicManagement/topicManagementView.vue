@@ -91,12 +91,12 @@
 
         <ContArrange
           v-for="(items,index) in  themeList"
-          :establish="!items.user?'该用户被删除':items.user._data.username"
-          :theme="formatDate(items._data.created_at)"
-          :numbertopic="items._data.thread_count"
-          :heatNumber="items._data.view_count"
-          :key="items._data.id"
-          :userId ="items._data.user_id"
+          :establish="!items.username ? '该用户被删除' : items.username"
+          :theme="formatDate(items.createdAt)"
+          :numbertopic="items.threadCount"
+          :heatNumber="items.viewCount"
+          :key="items.topicId"
+          :userId ="items.userId"
         >
           <div class="cont-manage-theme__table-side" slot="side">
             <!-- <el-checkbox
@@ -104,7 +104,7 @@
               :label="items._data.id"
               @change="handleCheckedCitiesChange()"
             ></el-checkbox> -->
-            <el-radio-group v-model="radio[index]" @change="themidpost($event,items._data.id)">
+            <el-radio-group v-model="radio[index]" @change="themidpost($event,items.topicId)">
               <el-radio :label="1">推荐</el-radio>
               <el-radio :label="2">取消</el-radio>
               <el-radio :label="3">删除</el-radio>
@@ -115,17 +115,17 @@
             slot="longText"
             class="cont-manage-theme__table-long-text"
             style="cursor: pointer;"
-            @click="$router.push({path:'/admin/cont-manage/topic', query: {id: items._data.id}})"
+            @click="$router.push({path:'/admin/cont-manage/topic', query: {id: items.topicId, name: items.content}})"
           >
-            {{`#${items._data.content}#`}}
+            {{`#${items.content}#`}}
           </p>
 
           <div class="cont-manage-theme__table-main tables-main" slot="main">
             <div class="cont-manage-theme__table-main-bigbox">
               <span
                 class="cont-manage-theme__table-main-bigbox-box"
-                @click="btnrecomment(items._data.id, items._data.recommended)"
-              >{{items._data.recommended === 1 ? recomment2 : recomment1}}</span>
+                @click="btnrecomment(items.topicId, items.recommended)"
+              >{{items.recommended ? recomment2 : recomment1}}</span>
               <span class="cont-manage-theme__table-main-bigbox-span"></span>
             <el-popover
               width="100"
@@ -145,7 +145,7 @@
                   type="primary"
                   size="mini"
                   @click="
-                    deteleTopic(items._data.id);
+                    deteleTopic(items.topicId);
                     closeDelet(`popover-${index}`)"
                   >确定</el-button
                 >

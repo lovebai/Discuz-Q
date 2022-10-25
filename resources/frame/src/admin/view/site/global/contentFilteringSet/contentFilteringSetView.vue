@@ -1,5 +1,6 @@
 <template>
     <div class="content-filter-set-box">
+      <p class="ip-filter">内容过滤</p>
       <div class="content-filter-set__search">
         <Card>
           <el-input  size="medium" class="el-cascader__search-input" v-model="serachVal" clearable placeholder="搜索过滤词"></el-input>
@@ -10,7 +11,8 @@
       <main class="content-filter-set-main">
         <p class="list-set-box">
           <span  @click="$router.push({path:'/admin/add-sensitive-words'})" >批量添加</span>
-          <a :href="exportUrl">导出过滤词库</a>
+          <span @click="exportUrlContent" >导出过滤词库</span>
+          <!-- <a :href="exportUrl">导出过滤词库</a> -->
         </p>
 
         <div>
@@ -29,8 +31,13 @@
               label="过滤词"
             >
               <template slot-scope="scope">
-                {{ !scope.row._data.addInputFlag ? scope.row._data.find : ''}}
-                <el-input splaceholder="请输入过滤词" clearable v-model="scope.row._data.find" v-show="scope.row._data.addInputFlag">
+                {{ !scope.row.addInputFlag ? scope.row.find : ''}}
+                <el-input
+                  splaceholder="请输入过滤词"
+                  clearable
+                  v-model="scope.row.find"
+                  v-show="scope.row.addInputFlag"
+                >
                 </el-input> 
               </template>
 
@@ -40,7 +47,7 @@
               label="主题和回复处理方式"
             >
               <template slot-scope="scope">
-                <el-select v-model="scope.row._data.ugc" placeholder="请选择" @change="selectChange(scope)">
+                <el-select v-model="scope.row.ugc" placeholder="请选择" @change="selectChange(scope)">
                   <el-option
                     v-for="item in options"
                     :key="item.value"
@@ -55,7 +62,7 @@
               prop="address"
               label="用户名处理方式">
               <template slot-scope="scope">
-                <el-select v-model="scope.row._data.username" placeholder="请选择" @change="selectChange(scope)">
+                <el-select v-model="scope.row.username" placeholder="请选择" @change="selectChange(scope)">
                   <el-option
                     v-for="item in optionsUser"
                     :key="item.value"
@@ -71,7 +78,7 @@
               prop="address"
               label="签名处理方式">
               <template slot-scope="scope">
-                <el-select v-model="scope.row._data.signature" placeholder="请选择" @change="selectChange(scope)">
+                <el-select v-model="scope.row.signature" placeholder="请选择" @change="selectChange(scope)">
                   <el-option
                     v-for="item in optionsUser"
                     :key="item.value"
@@ -86,7 +93,22 @@
               prop="address"
               label="短消息处理方式">
               <template slot-scope="scope">
-                <el-select v-model="scope.row._data.dialog" placeholder="请选择" @change="selectChange(scope)">
+                <el-select v-model="scope.row.dialog" placeholder="请选择" @change="selectChange(scope)">
+                  <el-option
+                    v-for="item in optionsUser"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              prop="address"
+              label="用户昵称处理方式">
+              <template slot-scope="scope">
+                <el-select v-model="scope.row.nickname" placeholder="请选择" @change="selectChange(scope)">
                   <el-option
                     v-for="item in optionsUser"
                     :key="item.value"
@@ -101,28 +123,73 @@
               prop="address"
               label="过滤词替换">
               <template slot-scope="scope">
-                <el-input v-model="scope.row._data.replacement" placeholder="请输入替换内容" :disabled="scope.row._data.ugc !== '{REPLACE}' && scope.row._data.username !== '{REPLACE}'" clearable v-show="replace"></el-input>
+                <el-input v-model="scope.row.replacement" placeholder="请输入替换内容" :disabled="scope.row.ugc !== '{REPLACE}' && scope.row.username !== '{REPLACE}'" clearable v-show="replace"></el-input>
               </template>
             </el-table-column>
 
           </el-table>
 
-        <TableContAdd @tableContAddClick="tableContAdd" cont="新增"></TableContAdd>
-
-          <!--<div class="content-filter-set-table-add">
-            <p>
-              <span class="iconfont iconicon_add icon-add"></span>
-              新增
-            </p>
-          </div>-->
-        <Page :total="total" :pageSize="pageLimit" :current-page.sync="pageNum" @current-change="handleCurrentChange" />
+          <TableContAdd @tableContAddClick="tableContAdd" cont="新增"></TableContAdd>
+          <Page :total="total" :pageSize="pageLimit" :current-page.sync="pageNum" @current-change="handleCurrentChange" />
         </div>
-
+        
         <Card class="footer-btn">
           <el-button type="primary" size="medium" @click="loginStatus">提交</el-button>
           <el-button size="medium" :disabled="deleteStatus" @click="deleteWords">删除</el-button>
         </Card>
+        
+        <div>
+          <p class="ip-filter">IP过滤</p>
+          <p class="ip-filter-text">内网IP黑名单</p>
+          <el-table
+            class="content-filter-set__ip"
+            ref="multipleTable"
+            :data="optionsIpData" 
+            tooltip-effect="dark"
+            style="width: 100%"
+            @selection-change="deleteChanges">
+            <el-table-column
+              type="selection"
+              width="50">
+            </el-table-column>
 
+            <el-table-column
+              label="IP地址"
+              width="200"
+            >
+              <template slot-scope="scope">
+                <el-input
+                  clearable
+                  v-model="scope.row.domainName"
+                >
+                </el-input> 
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="掩码位"
+              width="200"
+            >
+              <template slot-scope="scope">
+                <el-input
+                  clearable
+                   v-model="scope.row.domainMask"
+                >
+                </el-input> 
+              </template>
+            </el-table-column>
+            <el-table-column
+              label=""
+            >
+            </el-table-column>
+          </el-table>
+
+          <TableContAdd @tableContAddClick="increaseIpAdd" cont="新增"></TableContAdd>
+        </div>
+
+        <Card class="footer-btn">
+          <el-button type="primary" size="medium" @click="ipDataLoginStatus">提交</el-button>
+          <el-button size="medium" :disabled="ipDeleteStatus" @click="ipDataDelete">删除</el-button>
+        </Card>
       </main>
 
       <!--<div class="batch-set-box" v-if="loginStatus === 'batchSet'">

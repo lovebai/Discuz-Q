@@ -10,28 +10,28 @@
         <router-link
           to="/admin/cont-review"
           style="color: #336699;"
-        >(&nbsp;{{siteInfo.unapprovedThreads}}&nbsp;)</router-link>
+        >(&nbsp;{{unapproved.unapprovedThreads}}&nbsp;)</router-link>
       </p>
       <p class="pending-p">
         等待审核的回复数
         <router-link
           to="/admin/reply-review"
           style="color: #336699;"
-        >(&nbsp;{{siteInfo.unapprovedPosts}}&nbsp;)</router-link>
+        >(&nbsp;{{unapproved.unapprovedPosts}}&nbsp;)</router-link>
       </p>
       <p class="pending-p">
         等待审核的提现数
         <router-link
           to="/admin/withdrawal-application"
           style="color: #336699;"
-        >(&nbsp;{{siteInfo.unapprovedMoneys}}&nbsp;)</router-link>
+        >(&nbsp;{{unapproved.unapprovedMoneys}}&nbsp;)</router-link>
       </p>
       <p class="pending-p">
         等待审核的用户数
         <router-link
           to="/admin/user-review"
           style="color: #336699;"
-        >(&nbsp;{{siteInfo.unapprovedUsers}}&nbsp;)</router-link>
+        >(&nbsp;{{unapproved.unapprovedUsers}}&nbsp;)</router-link>
       </p>
     </Card>
 
@@ -47,11 +47,11 @@
       </p>
       <p class="section">
         <span class="section-title">服务器系统及PHP：</span>
-        <span>{{siteInfo.php_version}}</span>
+        <span>{{siteInfo.phpVersion}}</span>
       </p>
       <p class="section">
         <span class="section-title">服务器软件：</span>
-        <span>{{siteInfo.server_software}}</span>
+        <span>{{siteInfo.serverSoftware}}</span>
       </p>
       <p class="section">
         <span class="section-title">服务器MySQL版本：</span>
@@ -59,11 +59,11 @@
       </p>
       <p class="section">
         <span class="section-title">上传许可：</span>
-        <span>{{siteInfo.upload_size}}</span>
+        <span>{{siteInfo.uploadSize}}</span>
       </p>
       <p class="section">
         <span class="section-title">当前数据库尺寸：</span>
-        <span>{{siteInfo.db_size}}</span>
+        <span>{{siteInfo.dbSize}}</span>
       </p>
     </Card>
 
@@ -74,6 +74,7 @@
       <a href="https://cloud.tencent.com/" target="_blank">腾讯云</a>
       <a href="http://www.dnspod.cn/" target="_blank">DNSPod</a>
       <a href="https://da.do/hmos" target="_blank">免费SSL证书</a>
+      <a href="https://discuz.com/docs/#%E9%B8%A3%E8%B0%A2" target="_blank">鸣谢</a>
     </Card>
   </div>
 </template>

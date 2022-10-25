@@ -76,7 +76,8 @@
       </el-container>
 
     </el-container>
-    <el-dialog
+    <!-- 配置腾讯云的云API信息 -->
+    <!-- <el-dialog
       title="最后一步"
       class="index-qcloud-dialog"
       width="422px"
@@ -100,7 +101,7 @@
         <div>1. <a href="https://cloud.tencent.com/login" target="_blank">登录腾讯云</a></div>
         <div>2. 账号-访问管理-访问密钥-<a href="https://console.cloud.tencent.com/cam/capi" target="_blank">API密钥管理</a>（主账号和子账号密钥均可）</div>
       </div>
-    </el-dialog>
+    </el-dialog> -->
   </div>
 </template>
 

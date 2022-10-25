@@ -48,13 +48,17 @@ export default {
   methods: {
     loadStatus() {
       this.appFetch({
-        url: 'forum',
+        url: 'forum_get_v3',
         method: 'get',
         data: {}
       }).then(data => {
         if (data.errors) {
           this.$message.error(data.errors[0].code);
         } else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           // 获取对应值渲染
           this.getPrefix(this.type, data);
         }
@@ -66,25 +70,19 @@ export default {
 
       data = [
         {
-          "attributes": {
             "key": this.prefix + "app_id",
             "value": this.appId,
             "tag": this.type
-          }
         },
         {
-          "attributes": {
             "key": this.prefix + "app_secret",
             "value": this.appSecret,
             "tag": this.type
-          }
         },
         {
-          "attributes": {
             "key": this.prefix + "video",
             "value": this.closeVideo,
             "tag": 'wx_miniprogram'
-          }
         },
 
       ];
@@ -92,31 +90,25 @@ export default {
       if (this.type === 'wx_offiaccount'){
         data.push(
           {
-            "attributes": {
-              "key": "oplatform_url",
-              "value": this.serverUrl,
-              "tag": 'wx_oplatform'
-            }
+            "key": "oplatform_url",
+            "value": this.serverUrl,
+            "tag": 'wx_oplatform'
           },
           {
-            "attributes": {
-              "key": "oplatform_app_token",
-              "value": this.appToken,
-              "tag": 'wx_oplatform'
-            }
+            "key": "oplatform_app_token",
+            "value": this.appToken,
+            "tag": 'wx_oplatform'
           },
           {
-            "attributes": {
-              "key": "oplatform_app_aes_key",
-              "value": this.encodingAESKey,
-              "tag": 'wx_oplatform'
-            }
+            "key": "oplatform_app_aes_key",
+            "value": this.encodingAESKey,
+            "tag": 'wx_oplatform'
           }
         )
       }
 
       this.appFetch({
-        url: 'settings',
+        url: 'settings_post_v3',
         method: 'post',
         data: {
           "data": data
@@ -125,9 +117,10 @@ export default {
         if (data.errors) {
           this.$message.error(data.errors[0].code);
         } else {
-          // this.$router.push({
-          //   path: '/admin/worth-mentioning-set'
-          // });
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({
             message: '提交成功',
             type: 'success'
@@ -136,25 +129,26 @@ export default {
       })
     },
     getPrefix(type, data) {    // 传参
+      const {Data: forumData} = data;
       switch (type) {
         case 'wx_offiaccount':
           this.prefix = 'offiaccount_';
-          this.appId = data.readdata._data.passport.offiaccount_app_id;
-          this.appSecret = data.readdata._data.passport.offiaccount_app_secret;
-          this.serverUrl = data.readdata._data.passport.oplatform_url;
-          this.appToken = data.readdata._data.passport.oplatform_app_token;
-          this.encodingAESKey = data.readdata._data.passport.oplatform_app_aes_key;
+          this.appId = forumData.passport.offiaccountAppId;
+          this.appSecret = forumData.passport.offiaccountAppSecret;
+          this.serverUrl = forumData.passport.oplatformUrl;
+          this.appToken = forumData.passport.oplatformAppToken;
+          this.encodingAESKey = forumData.passport.oplatformAppAesKey;
           break;
         case 'wx_miniprogram':
           this.prefix = 'miniprogram_';
-          this.appId = data.readdata._data.passport.miniprogram_app_id;
-          this.appSecret = data.readdata._data.passport.miniprogram_app_secret;
-          this.closeVideo = data.readdata._data.set_site.miniprogram_video;
+          this.appId = forumData.passport.miniprogramAppId;
+          this.appSecret = forumData.passport.miniprogramAppSecret;
+          this.closeVideo = forumData.setSite.miniprogramVideo;
           break;
         case 'wx_oplatform':
           this.prefix = 'oplatform_';
-          this.appId = data.readdata._data.passport.oplatform_app_id;
-          this.appSecret = data.readdata._data.passport.oplatform_app_secret;
+          this.appId = forumData.passport.oplatformAppId;
+          this.appSecret = forumData.passport.oplatformAppSecret;
           break;
       }
     },

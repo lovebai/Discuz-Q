@@ -20,23 +20,16 @@
       <div class="cont-manage-header_middle condition-box">
         <div class="cont-manage-header_condition cont-manage-header_condition-lf">
           <span class="cont-manage-header_condition-title">搜索范围：</span>
-          <!-- <el-select v-model="searchData.categoryId" placeholder="选择搜索范围">
-            <el-option
-              v-for="item in categoriesList"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            ></el-option>
-          </el-select> -->
           <el-cascader
             v-model="searchData.categoryId"
+            clearable
             :options="categoriesList"
             :props="{ expandTrigger: 'hover', checkStrictly: true }">
           </el-cascader>
         </div>
-        <div class="cont-manage-header_condition">
+        <div class="cont-manage-header_condition cont-manage-header_condition-lf">
           <span class="cont-manage-header_condition-title">主题类型：</span>
-          <el-select v-model="searchData.topicTypeId" placeholder="选择主题类型">
+          <el-select v-model="searchData.topicTypeId" placeholder="选择主题类型" clearable>
             <el-option v-for="item in topicType" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </div>
@@ -58,22 +51,13 @@
       </div>
 
       <div class="cont-manage-header_bottom condition-box">
-        <!--<div class="cont-manage-header_condition cont-manage-header_condition-lf">
-            <span class="cont-manage-header_condition-title">发布时间:</span>
-            <el-date-picker
-              v-model="searchData.dataValue"
-              type="daterange"
-              align="right"
-              unlink-panels
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              value-format="yyyy-MM-dd HH:mm:ss"
-              :default-time="['00:00:00', '23:59:59']"
-              :picker-options="pickerOptions">
-            </el-date-picker>
-        </div>-->
-        <div class="cont-manage-header_condition cont-manage-header_condition-mid">
+         <!-- <div class="cont-manage-header_condition cont-manage-header_condition-lf">
+          <span class="cont-manage-header_condition-title">内容来源：</span>
+          <el-select v-model="searchData.contentSourceId" placeholder="选择内容来源" clearable>
+            <el-option v-for="item in contentSource" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </div> -->
+        <div class="cont-manage-header_condition cont-manage-header_condition-lf">
           <span class="cont-manage-header_condition-title">浏览次数：</span>
           <el-input size="medium" placeholder="大于" v-model="searchData.viewedTimesMin" clearable></el-input>
           <div class="spacing">-</div>
@@ -98,7 +82,6 @@
         </div>
       </div>
     </div>
-
     <!-- 主题展示 -->
     <div class="cont-manage-theme">
       <div class="cont-manage-theme__table">
@@ -108,24 +91,24 @@
             v-model="checkAll"
             @change="handleCheckAllChange"
           ></el-checkbox>
-          <p class="cont-manage-theme__table-header__title" style=" margin-left: 30PX;">{{ topic ? `话题 #${topic.content}#` : ''}} 主题列表</p>
+          <p class="cont-manage-theme__table-header__title" style=" margin-left: 30PX;">{{ topic ? `话题 #${topic}#` : ''}} 主题列表</p>
         </div>
 
         <ContArrange
-          v-for="(items,index) in  themeList"
-          :author="!items.user?'该用户被删除':items.user._data.username"
-          :theme="items.category._data.name"
-          :prply="items._data.postCount - 1"
-          :browse="items._data.viewCount"
-          :last="!items.lastPostedUser?'该用户被删除':items.lastPostedUser._data.username"
-          :releaseTime="formatDate(items._data.createdAt)"
-          :userId="!items.user?'该用户被删除':items.user._data.id"
-          :key="items._data.id"
-        >
+          v-for="(items, index) in  themeList"
+          :author="!items.user? '该用户被删除': items.user.nickname"
+          :theme="items.categoryName"
+          :prply="items.likeReward.postCount"
+          :browse="items.viewCount"
+          :last="!items.lastPostedUser ? '该用户被删除': items.lastPostedUser.lastNickname"
+          :releaseTime="formatDate(items.createdAt)"
+          :userId="!items.user ? '该用户被删除':items.user.userId"
+          :key="index"
+        > 
           <div class="cont-manage-theme__table-side" slot="side">
             <el-checkbox
               v-model="checkedTheme"
-              :label="items._data.id"
+              :label="items.threadId"
               @change="handleCheckedCitiesChange()"
             ></el-checkbox>
           </div>
@@ -133,47 +116,62 @@
           <a
             slot="longText"
             class="cont-manage-theme__table-long-text"
-            v-if="items._data.type === 1"
-            :href="'/topic/index?id=' + items._data.id"
+            v-if="items.title"
+            :href="'/thread/' + items.threadId"
             target="_blank"
           >
-            {{items._data.title}}
+            {{items.title}}
             <span
               class="iconfont"
-              :class="parseInt(items._data.price) > 0?'iconmoney':'iconchangwen'"
+              :class="parseInt(items.price) > 0?'iconmoney':'iconchangwen'"
             ></span>
           </a>
 
           <div class="cont-manage-theme__table-main" slot="main">
             <a
               class="cont-manage-theme__table-main__cont-text"
-              :href="'/topic/index?id=' + items._data.id"
+              :href="'/thread/' + items.threadId"
               target="_blank"
-              :style="{'display':(items.threadVideo ? 'inline':'block')}"
-              v-html="items.firstPost._data.contentHtml"
+              :style="{'display':(contentIndexes(items.content, 'videos') ? 'inline':'block')}"
+              v-html="$xss(filterContent(items.content.text))"
             ></a>
-            <span class="iconfont iconvideo" v-if="items.threadVideo"></span>
-            <div class="cont-manage-theme__table-main__cont-imgs" v-if="!items._data.title">
+            <span class="iconfont iconvideo" v-if="contentIndexes(items.content, 'videos')"></span>
+            <div class="cont-manage-theme__table-main__cont-imgs" v-if="contentIndexes(items.content, 'images')">
               <p
                 class="cont-manage-theme__table-main__cont-imgs-p"
-                v-for="(item,index) in items.firstPost.images"
+                v-for="(item,index) in contentIndexes(items.content, 'images')"
                 :key="index"
               >
                 <img
-                  v-lazy="item._data.thumbUrl"
-                  @click="imgShowClick(items.firstPost.images,index)"
-                  :alt="item._data.fileName"
+                  v-lazy="item.thumbUrl"
+                  @click="imgShowClick(contentIndexes(items.content, 'images'),index)"
+                  :alt="item.fileName"
                 />
               </p>
             </div>
             <div
               class="cont-manage-theme__table-main__cont-annex"
-              v-show="items.firstPost.attachments.length > 0"
+              v-show="contentIndexes(items.content, 'attachments')"
             >
               <span>附件：</span>
-              <p v-for="(item,index) in items.firstPost.attachments" :key="index">
-                <a :href="item._data.url" target="_blank">{{item._data.fileName}}</a>
+              <p v-for="(item,index) in contentIndexes(items.content, 'attachments')" :key="index">
+                <a :href="item.url" target="_blank">{{item.fileName}}</a>
               </p>
+            </div>
+            <div
+              class="cont-manage-theme__table-main__cont-vote"
+              v-if="contentIndexes(items.content, 'vote')"
+            >
+              <p>{{contentIndexes(items.content, 'vote')[0].voteTitle}}</p>
+              <div>
+                 <p v-for="(voteItems, indexs) in contentIndexes(items.content, 'vote')[0].subitems" :key="indexs">{{indexs + 1}}.  {{$xss(voteItems.content)}}</p>
+              </div>
+            </div>
+            <div v-if="contentIndexes(items.content, 'audio')">
+              <audio controls class="cont-manage-theme__table-main__audio" :src="contentIndexes(items.content, 'audio').mediaUrl" ref="audioPlear"></audio>
+            </div>
+            <div v-if="contentIndexes(items.content, 'iframe')">
+               <div v-html="contentIndexes(items.content, 'iframe').content"></div>
             </div>
           </div>
         </ContArrange>
@@ -210,16 +208,9 @@
 
         <el-table-column label="选项" min-width="250">
           <template slot-scope="scope">
-            <!-- <el-select v-if="scope.row.name === '批量移动到分类'" v-model="categoryId" placeholder="选择分类">
-              <el-option
-                v-for="item in categoriesList"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              ></el-option>
-            </el-select> -->
             <el-cascader
               v-if="scope.row.name === '批量移动到分类'"
+              clearable
               v-model="categoryId"
               :options="moveCateList"
               :props="{ expandTrigger: 'hover', checkStrictly: true }">
@@ -242,14 +233,16 @@
               <el-radio :label="1">精华</el-radio>
               <el-radio :label="2">取消精华</el-radio>
             </el-radio-group>
-            <el-radio-group
-              class="cont-manage__option-select"
-              v-if="scope.row.name === '批量推送到付费首页'"
-              v-model="siteRadio"
-            >
-              <el-radio :label="1">推送</el-radio>
-              <el-radio :label="2">取消推送</el-radio>
-            </el-radio-group>
+            <div v-if="scope.row.name === '批量推送到付费首页'">
+              <el-radio-group
+                class="cont-manage__option-select"
+                v-model="siteRadio"
+              >
+                <el-radio :label="1">推送</el-radio>
+                <el-radio :label="2">取消推送</el-radio>
+              </el-radio-group>
+              <span class="cont-manage__option-select-tip">如未设置，默认展示热门内容</span>
+            </div>
           </template>
         </el-table-column>
       </el-table>

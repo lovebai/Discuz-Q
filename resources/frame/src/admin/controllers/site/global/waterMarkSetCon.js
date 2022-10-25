@@ -63,25 +63,30 @@ export default {
   methods: {
     waterMarkSet() {
       this.appFetch({
-        url: "forum",
+        url: 'forum_get_v3',
         method: "get",
         data: {}
       }).then(res => {
         if (res.errors) {
           this.$message.error(res.errors[0].code);
         } else {
-          this.switchBtn = res.readdata._data.watermark.watermark;
-          this.imageUrl = res.readdata._data.watermark.watermark_image;
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: forumData} = res;
+          this.switchBtn = forumData.watermark.watermark;
+          this.imageUrl = forumData.watermark.watermarkImage;
           if(this.imageUrl !== '' && this.imageUrl != null){
             this.deleteBtn = true;
           }
-          if( res.readdata._data.watermark.position !== '' && res.readdata._data.watermark.position != null && res.readdata._data.watermark.position !== 0 ){
-            this.posiCurrent = res.readdata._data.watermark.position - 1;
-            this.waterMarkPosi = res.readdata._data.watermark.position;
+          if( forumData.watermark.position !== '' && forumData.watermark.position != null && forumData.watermark.position !== 0 ){
+            this.posiCurrent = forumData.watermark.position - 1;
+            this.waterMarkPosi = forumData.watermark.position;
           }
 
-          this.verticalSpacing = res.readdata._data.watermark.vertical_spacing;
-          this.horizontalSpacing = res.readdata._data.watermark.horizontal_spacing;
+          this.verticalSpacing = forumData.watermark.verticalSpacing;
+          this.horizontalSpacing = forumData.watermark.horizontalSpacing;
         }
       });
     },
@@ -117,39 +122,30 @@ export default {
       }
 
       this.appFetch({
-        url: "settings",
+        url: "settings_post_v3",
         method: "post",
         data: {
           data: [
             {
-              attributes: {
-                key: "watermark",
-                value: this.switchBtn,
-                tag: "watermark"
-              }
+              key: "watermark",
+              value: this.switchBtn,
+              tag: "watermark"
             },
             {
-              attributes: {
-                key: "position",
-                value: this.waterMarkPosi,
-                tag: "watermark"
-              }
+              key: "position",
+              value: this.waterMarkPosi,
+              tag: "watermark"
             },
             {
-              attributes: {
-                key: "vertical_spacing",
-                value: this.verticalSpacing,
-                tag: "watermark"
-              }
+              key: "vertical_spacing",
+              value: this.verticalSpacing,
+              tag: "watermark"
             },
             {
-              attributes: {
-                key: "horizontal_spacing",
-                value: this.horizontalSpacing,
-                tag: "watermark"
-              }
+              key: "horizontal_spacing",
+              value: this.horizontalSpacing,
+              tag: "watermark"
             },
-
           ]
         }
       })
@@ -157,6 +153,10 @@ export default {
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
             this.$message({ message: "提交成功", type: "success" });
             this.annexSet(); //提交成功后调取新数据
           }
@@ -184,7 +184,7 @@ export default {
       logoFormData.append("logo", e.file);
       logoFormData.append("type", "watermark_image");
       this.appFetch({
-        url: "logo",
+        url: "settings_logo_post_v3",
         method: "post",
         data: logoFormData
       })
@@ -192,7 +192,11 @@ export default {
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
-            this.imageUrl = data.readdata._data.default.logo;
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
+            this.imageUrl = data.Data.value;
             this.$message({ message: "上传成功", type: "success" });
             this.deleteBtn = true;
           }
@@ -206,8 +210,8 @@ export default {
       }
       this.imageUrl = "";
       this.appFetch({
-        url: "logo",
-        method: "delete",
+        url: "delete_logo_post_v3",
+        method: "post",
         data: {
           type: 'watermark_image',
         }
@@ -216,6 +220,10 @@ export default {
           if (data.errors) {
             this.$message.error(data.errors[0].code);
           } else {
+            if (data.Code !== 0) {
+              this.$message.error(data.Message);
+              return
+            }
             this.$message("删除成功");
             this.deleteBtn = false;
           }

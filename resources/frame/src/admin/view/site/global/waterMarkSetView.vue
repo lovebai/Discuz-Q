@@ -60,7 +60,6 @@
             size="small"
             type="number"
             v-model="verticalSpacing"
-            @blur.native.capture="onblurFun"
           ></el-input>
           <span class="marL10">PX</span>
         </div>
@@ -70,7 +69,6 @@
             size="small"
             type="number"
             v-model="horizontalSpacing"
-            @blur.native.capture="onblurFun"
           ></el-input>
           <span class="marL10">PX</span>
         </div>

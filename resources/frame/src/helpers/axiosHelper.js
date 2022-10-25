@@ -145,7 +145,7 @@ const appFetch = function(params, options) {
   }
 
   //如果是本地请求，就走接口代理
-  if(process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development') {
     params.baseURL = "/api";
     params.url = apiUrl;
   } else {
@@ -249,7 +249,11 @@ const appFetch = function(params, options) {
             Router.init().replace({path:'/supplier-all-back',query:{url:Router.init().history.current.path}});
           })
         }else {
+          const token = localStorage.getItem('access_token');
+          const userId = localStorage.getItem('user_id');
           localStorage.clear();
+          token && localStorage.setItem('access_token', token);
+          userId && localStorage.setItem('user_id', userId);
           Router.init().push({path:'/login-user'})
         }
 
@@ -271,7 +275,161 @@ const appFetch = function(params, options) {
   });
 }
 
+const pluginFetch = function(params, options) {
+  if(params === undefined) {
+    console.error("必须传递参数");
+    return false;
+  }
+  var oldUrl = params.url;
+  var apiUrl = appConfig.apis[oldUrl];
+  //是不是标准接口
+  params.standard = params.standard !== undefined ? params.standard : true;
 
+
+
+  params.method = params.method ? params.method : 'get';
+  // if(!apiUrl) {
+  //   apiUrl = "/api/" + oldUrl;
+    // return false;
+  // }
+
+  /**
+    * @param {[type]} splice [接收url后面拼接]
+    * @param splice:'/2019120310255349505652',
+    */
+  if (params.splice){
+    apiUrl = apiUrl + params.splice;
+  }
+
+  //如果是本地请求，就走接口代理
+  if (process.env.NODE_ENV === 'development') {
+    params.baseURL = "/";
+    params.url = apiUrl;
+  } else {
+    params.baseURL = "/";
+    params.url = appConfig.pluginBaseUrl + apiUrl;
+  }
+
+  params.withCredentials = true;
+  var authVal = browserDb.getLItem('Authorization');
+
+  //统一不需要toke的路由列表
+  let requireAuth = [
+    'login-user',
+    'login-phone',
+    'wx-login-bd',
+    'wx-sign-up-bd',
+    'sign-up',
+    'bind-phone',
+    'retrieve-pwd',
+    'admin/login',
+    'supplier-all-back'
+  ];
+
+  // && !requireAuth.includes(window.location.pathname)
+
+
+  let defaultHeaders;
+  if(authVal != '' && authVal != null && !requireAuth.includes(window.location.pathname)){
+    defaultHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization':'Bearer ' + authVal
+    };
+  } else {
+    defaultHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization':''
+    };
+  }
+
+  //设置默认header
+  if(params.headers) {
+    params.headers = {
+      ...defaultHeaders,
+      ...params.headers
+    };
+  } else {
+    params.headers = defaultHeaders;
+  }
+
+  //get 方式需要把参数传给params
+  if(params.method.toLowerCase() == 'get'&& params.data) {
+    params.params = params.data ? params.data : params.params;
+
+    //如果传递include，处理成字符串
+    if(params.params.include && params.params.include instanceof Array) {
+      params.params.include = params.params.include.join(',');
+    }
+
+    //如果需要传递对象
+    ['filter', 'page', 'filed'].forEach(function(pName) {
+      if(params.params[pName] && params.params[pName] instanceof Object) {
+        var addObject = {};
+
+        Object.keys(params.params[pName]).forEach(function(nowKey) {
+          addObject[pName+'['+nowKey+']'] = params.params[pName][nowKey];
+        });
+
+        delete params.params[pName];
+        params.params = {...params.params, ...addObject}
+      }
+    })
+
+    if(params.data) delete params.data
+  }
+
+  return axios(params).then(data => {
+    if(data.status >= 200 && data.status < 300) {
+      if(params.standard) {
+        if(data.data.meta && data.data.meta instanceof Array) {
+          data.data.meta.forEach(function(error) {
+            error.code = error.code ? Vue.prototype.getLang(error.code) : Vue.prototype.getLang(error.message);
+          })
+        }
+
+        //处理后的结构数据
+        if(data.data.data) {
+          data.data.readdata = analyzingData(data.data.data, data.data.included);
+        }
+      }
+
+      return data.data;
+    } else {
+      if (data.data.errors[0].code === 'access_denied'){
+        //拒绝访问需要跳转到登录页面
+        let isWeixin = appCommonH.isWeixin().isWeixin;
+
+        if (isWeixin){
+          browserDb.setLItem('Authorization','');
+          getNewToken().then(res=>{
+            Router.init().replace({path:'/supplier-all-back',query:{url:Router.init().history.current.path}});
+          })
+        }else {
+          const token = localStorage.getItem('access_token');
+          const userId = localStorage.getItem('user_id');
+          localStorage.clear();
+          token && localStorage.setItem('access_token', token);
+          userId && localStorage.setItem('user_id', userId);
+          Router.init().push({path:'/login-user'})
+        }
+
+      }
+
+      data.data.rawData = appCommonH.copyObj(data.data.errors);
+
+      data.data.errors.forEach(function(error) {
+        error.code = Vue.prototype.getLang(error.code);
+      });
+
+      if (data.data.rawData[0].code === 'access_denied' && appCommonH.isWeixin().isWeixin){
+        //为什么注释delete，因为删除后上面的判断没有errors，导致报错。也导致接口请求走catch
+        // delete data.data.errors;
+      }
+
+      return data.data;
+    }
+  });
+}
 /**
  * 拉取新token
  * @param  {[type]} data [description]
@@ -282,20 +440,19 @@ const getNewToken = function (router) {
 
 
   return appFetch({
-    url:'access',
+    url:'refresh_token_post_v3',
     method:'post',
     data:{
-      "data": {
-        "attributes": {
-          'grant_type':'refresh_token',
-          'refresh_token':browserDb.getLItem('refreshToken')
-        }
-      }
+      'refreshToken':browserDb.getLItem('refreshToken')
     }
   }).then(res=>{
-    let token = res.data.attributes.access_token;
+    if (res.Code !== 0) {
+      this.$message.error(res.Message);
+      return
+    }
+    let token = res.Data.accessToken;
     // let tokenId = res.data.id;
-    let refreshToken = res.data.attributes.refresh_token;
+    let refreshToken = res.Data.refreshToken;
     browserDb.setLItem('Authorization', token);
     // browserDb.setLItem('tokenId', tokenId);
     browserDb.setLItem('refreshToken',refreshToken);
@@ -307,5 +464,5 @@ const getNewToken = function (router) {
 }
 
 Vue.prototype.appFetch = appFetch;
-
+Vue.prototype.pluginFetch = pluginFetch;
 export default appFetch;

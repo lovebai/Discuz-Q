@@ -2,14 +2,17 @@
   <div class="site-sort-set-box" >
     <div v-show="isShow">
       <!-- 添加内容 -->
-      <p class="sort-desc">默认首页：</p>
+      <div class="sort-switch-header">
+        <p class="sort-desc repeat">推荐首页</p>
+        <p class="data-rules" @click="jumpDataRules">数据规则</p>
+      </div>
 
       <div class="sort-switch-box">
         <div class="sort-switch">
           <el-switch v-model="siteOpenSort" active-color="#336699" inactive-color="#bbbbbb">
           </el-switch>
         </div>
-        <p class="sort-switch-desc">说明：<br/>开启后，增加默认首页的标签，并按照如下规则显示默认首页数据：将勾选“添加内容”取并集，并且将“排除内容”在并集中去掉。</p>
+        <p class="sort-switch-desc">说明：<br/>开启后，增加推荐首页的标签，并按照如下规则显示推荐首页数据：将勾选“添加内容”取并集，并且将“排除内容”在并集中去掉。</p>
       </div>
 
       <div v-show="siteOpenSort">
@@ -107,7 +110,7 @@
         <Card class="sort-border-bottom">
           <CardRow >
             <div class="sort-item-wrap">
-              <span>按用户角色排除：</span>
+              <span>按用户排除：</span>
               <el-select 
                 ref="excludeUser"
                 v-model="sortData.blockUsersList" 

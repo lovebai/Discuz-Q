@@ -112,7 +112,9 @@ $selectFontColor:$selectFontColor;
 .el-tooltip__popper{
   max-width: 50%;
 }
-
+.el-cascader .el-input .el-icon-circle-close {
+  font-size: 14PX;
+}
 /*关闭按钮*/
 .el-icon-circle-close{
   color: white;

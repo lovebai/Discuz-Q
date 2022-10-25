@@ -19,44 +19,34 @@ export default {
   methods:{
     submission(){
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-              "attributes":{
-                "key":'qcloud_cos_bucket_name',
-                "value":this.cosName,
-                "tag": "qcloud"
-              }
+              "key":'qcloud_cos_bucket_name',
+              "value":this.cosName,
+              "tag": "qcloud"
             },
             {
-              "attributes":{
-                "key":'qcloud_cos_bucket_area',
-                "value":this.cosArea,
-                "tag": "qcloud",
-              }
+              "key":'qcloud_cos_bucket_area',
+              "value":this.cosArea,
+              "tag": "qcloud",
             },
             {
-              "attributes":{
-                "key":'qcloud_cos_cdn_url',
-                "value":this.cosDomainName,
-                "tag": "qcloud",
-              }
+              "key":'qcloud_cos_cdn_url',
+              "value":this.cosDomainName,
+              "tag": "qcloud",
             },
             {
-              "attributes":{
-                "key":'qcloud_cos_sign_url',
-                "value":this.cosSignUrl,
-                "tag": "qcloud",
-              }
+              "key":'qcloud_cos_sign_url',
+              "value":this.cosSignUrl,
+              "tag": "qcloud",
             },
             {
-              "attributes":{
-                "key":'qcloud_cos_doc_preview',
-                "value":this.cosDocPreview,
-                "tag": "qcloud",
-              }
+              "key":'qcloud_cos_doc_preview',
+              "value":this.cosDocPreview,
+              "tag": "qcloud",
             }
           ]
         }
@@ -64,6 +54,10 @@ export default {
         if (res.errors){
           this.$message.error(res.errors[0].code);
         }else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.$message({message: '提交成功', type: 'success'});
         }
       })
@@ -72,18 +66,23 @@ export default {
     //接口请求
     getTencentCloudCon(){
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{}
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
-        }else {
-          this.cosName = res.readdata._data.qcloud.qcloud_cos_bucket_name;
-          this.cosArea = res.readdata._data.qcloud.qcloud_cos_bucket_area;
-          this.cosDomainName = res.readdata._data.qcloud.qcloud_cos_cdn_url;
-          this.cosSignUrl = res.readdata._data.qcloud.qcloud_cos_sign_url;
-          this.cosDocPreview = res.readdata._data.qcloud.qcloud_cos_doc_preview;
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: forumData} = res;
+          this.cosName = forumData.qcloud.qcloudCosBucketName;
+          this.cosArea = forumData.qcloud.qcloudCosBucketArea;
+          this.cosDomainName = forumData.qcloud.qcloudCosCdnUrl;
+          this.cosSignUrl = forumData.qcloud.qcloudCosSignUrl;
+          this.cosDocPreview = forumData.qcloud.qcloudCosDocPreview;
         }
       })
     },

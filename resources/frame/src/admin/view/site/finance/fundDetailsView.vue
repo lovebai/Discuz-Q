@@ -3,8 +3,8 @@
       <!-- 搜索条件 -->
       <div class="fund-details__search-box">
         <div class="fund-details__search-condition">
-          <span class="fund-details__search-condition__title">用户名：</span>
-          <el-input v-model="userName" clearable placeholder="搜索用户名"></el-input>
+          <span class="fund-details__search-condition__title">用户昵称：</span>
+          <el-input v-model="userName" clearable placeholder="搜索用户昵称"></el-input>
         </div>
         <div class="fund-details__search-condition">
           <span class="fund-details__search-condition__title">金额类型</span>
@@ -27,7 +27,9 @@
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            :picker-options="pickerOptions">
+            :picker-options="pickerOptions"
+            @change="handleTimeChange"
+          >
           </el-date-picker>
         </div>
 
@@ -49,31 +51,31 @@
           style="width: 100%">
 
           <el-table-column
-            prop="user._data.username"
-            label="用户名"
-            width="120">
+            prop="nickname"
+            label="用户昵称"
+            width="200">
           </el-table-column>
 
           <el-table-column
             label="变动时间"
             width="190">
-            <template slot-scope="scope">{{ formatDate(scope.row._data.created_at) }}</template>
+            <template slot-scope="scope">{{ formatDate(scope.row.createdAt) }}</template>
           </el-table-column>
 
           <el-table-column
-            prop="_data.change_available_amount"
+            prop="changeAvailableAmount"
             label="可用金额"
             width="100">
           </el-table-column>
 
           <el-table-column
-            prop="_data.change_freeze_amount"
+            prop="changeFreezeAmount"
             label="冻结金额"
             width="100">
           </el-table-column>
 
           <el-table-column
-            prop="_data.change_desc"
+            prop="changeDesc"
             label="变动描述">
           </el-table-column>
         </el-table>

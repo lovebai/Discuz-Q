@@ -5,16 +5,13 @@ import CardRow from '../../../view/site/common/card/cardRow';
 export default {
   data:function () {
     return {
-      checked:'',
+      is_register_close:'', //是否允许游客注册成为会员
+      is_need_transition:'', //是否启用微信内落地页
       register_validate:'',   //注册审核
-      pwdLength:'',           //密码长度
+      pwdLength:'6',           //密码长度
       checkList:[],           //密码规则
       register_captcha:'',    //验证码开始
       disabled:true,            //是否可以开启验证码
-      register_type: 0,      // 注册模式
-      qcloud_name: false,
-      qcloud_sms: false,
-      qcloud_wx: false,
       privacy: "0", //隐私协议
       register: "0", //用户协议
       register_content:'',
@@ -32,7 +29,7 @@ export default {
   methods:{
     signUpSet(){
       this.appFetch({
-        url:'forum',
+        url:'forum_get_v3',
         method:'get',
         data:{
           'filter[tag]': 'agreement'
@@ -40,45 +37,26 @@ export default {
       }).then(res=>{
         if (res.errors){
           this.$message.error(res.errors[0].code);
-        }else {
-          const agreement = res.readdata._data.agreement;
-          console.log(res);
-          // this.pwdLength = res.readdata._data.setreg.password_length
-          this.checked = res.readdata._data.set_reg.register_close;
-          this.register_validate = res.readdata._data.set_reg.register_validate;
-          this.pwdLength = res.readdata._data.set_reg.password_length;
-          this.checkList = res.readdata._data.set_reg.password_strength;
-          this.register_captcha = res.readdata._data.set_reg.register_captcha;
-          this.register_type = res.readdata._data.set_reg.register_type;
+        } else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
+          const {Data: forumData} = res;
+          const agreement = forumData.agreement;
+          this.is_register_close = forumData.setReg.registerClose;
+          this.is_need_transition = forumData.setReg.isNeedTransition;
+          this.register_validate = forumData.setReg.registerValidate;
+          this.pwdLength = forumData.setReg.passwordLength;
+          this.checkList = forumData.setReg.passwordStrength;
+          this.register_captcha = forumData.setReg.registerCaptcha;
           this.privacy = agreement.privacy ? "1" : "0";
           this.register = agreement.register ? "1" : "0";
-          this.register_content = agreement.register_content;
-          this.privacy_content = agreement.privacy_content;
-          this.extensionOn = res.readdata._data.set_site.open_ext_fields === '1' ? true : false;
-          // 旧注册登陆模式的禁用控制
-          if(res.readdata._data.qcloud.qcloud_sms == true) {
-            this.qcloud_sms = false
-          } else {
-            this.qcloud_sms = true
-          }
-          // 第三方登录设置：公众号配置、小程序配置、PC端微信扫码登录全部开启，才可选无感模式
-          if(
-            res.readdata._data.passport.offiaccount_close
-              && res.readdata._data.passport.miniprogram_close
-              && res.readdata._data.passport.oplatform_close
-          ) {
-            this.qcloud_wx = false
-          } else {
-            this.qcloud_wx = true;
-          }
+          this.register_content = agreement.registerContent;
+          this.privacy_content = agreement.privacyContent;
+          this.extensionOn = forumData.setSite.openExtFields === '1' ? true : false;
 
-          // 新注册登陆模式的禁用控制
-          // this.qcloud_name = !res.readdata._data.sign_enable.user_name;
-          // this.qcloud_sms = !res.readdata._data.sign_enable.mobile_phone;
-          // this.qcloud_wx = !res.readdata._data.sign_enable.wechat_direct;
-
-
-          if(res.readdata._data.qcloud.qcloud_captcha == true){
+          if(forumData.qcloud.qcloudCaptcha == true){
             this.disabled = false
           }
         }
@@ -99,19 +77,29 @@ export default {
     changeSize(obj){
        this[obj]= !this[obj];
     },
+    onblurFun() {
+      if (this.pwdLength == null || this.pwdLength == "" || this.pwdLength < 6) {
+        this.$message("密码最小长度为6");
+        this.pwdLength = '6';
+      }
+    },
     extendFun() {
       this.appFetch({
-        url: 'signInFields',
+        url: 'signinfields_get_v3',
         method: 'get',
         data: {},
       }).then(res => {
+        if (res.Code !== 0) {
+          this.$message.error(res.Message);
+          return
+        }
         let arr = [];
-        res.readdata.forEach(element => {
-          if (element._data.status === 1) {
+        res.Data.forEach(element => {
+          if (element.status === 1) {
             arr.push(element);
           }
         });
-        if (res.readdata.length > 0 && arr.length > 0) {
+        if (res.Data.length > 0 && arr.length > 0) {
           this.extendsBtn = false;
         } else {
           this.extensionOn = false;
@@ -122,16 +110,14 @@ export default {
     },
     extendConfing() {
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data" :[
             {
-              "attributes":{
-                "key":'open_ext_fields',
-                "value": this.extensionOn ? 1 : 0,
-                "tag": 'default'
-              }
+              "key":'open_ext_fields',
+              "value": this.extensionOn ? 1 : 0,
+              "tag": 'default'
             }
           ],
         }
@@ -142,104 +128,76 @@ export default {
           } else {
             this.$message.error(res.errors[0].code);
           }
-          // this.$message.error(data.errors[0].code);
         }else {
+          if (res.Code !== 0) {
+            this.$message.error(res.Message);
+            return
+          }
           this.signUpSet();
         }
       })
     },
     submission(){ //提交注册信息接口
-      var reg = /^\d+$|^\d+[.]?\d+$/;
-      var pwdLength = this.pwdLength;
-      var passwordStrength = this.checkList.join(",")
-      // if(pwdLength === ''){
-      //   return
-      // }
-      // if (!reg.test(pwdLength)) { //密码只能输入数字
-      //   this.$message("密码只能输入数字");
-      //   return
-      // }
+      var passwordStrength = this.checkList.join(",");
       this.appFetch({
-        url:'settings',
+        url:'settings_post_v3',
         method:'post',
         data:{
           "data":[
             {
-             "attributes":{
               "key":'register_close',
-              "value":this.checked,
+              "value":this.is_register_close,
               "tag": 'default'
-             }
             },
             {
-              "attributes":{
-                "key":'register_validate',
-                "value":this.register_validate,
-                "tag": 'default'
-              }
+              "key":'is_need_transition',
+              "value":this.is_need_transition,
+              "tag": 'default'
             },
             {
-              "attributes":{
-                "key":'register_captcha',
-                "value":this.register_captcha,
-                "tag": 'default'
-              }
+              "key":'register_validate',
+              "value":this.register_validate,
+              "tag": 'default'
             },
             {
-              attributes: {
-                key: "privacy",
-                value: this.privacy,
-                tag: "agreement"
-              }
+              "key":'register_captcha',
+              "value":this.register_captcha,
+              "tag": 'default'
             },
             {
-              attributes: {
-                key: "register",
-                value: this.register,
-                tag: "agreement"
-              }
+              key: "privacy",
+              value: this.privacy,
+              tag: "agreement"
             },
             {
-              attributes: {
-                key: "register_content",
-                value: this.register_content ? this.register_content : "",
-                tag: "agreement"
-              }
+              key: "register",
+              value: this.register,
+              tag: "agreement"
             },
             {
-              attributes: {
-                key: "privacy_content",
-                value: this.privacy_content ? this.privacy_content : "",
-                tag: "agreement"
-              }
+              key: "register_content",
+              value: this.register_content ? this.register_content : "",
+              tag: "agreement"
             },
             {
-              "attributes":{
-                "key":'password_length',
-                "value":this.pwdLength,
-                "tag": 'default'
-               }
+              key: "privacy_content",
+              value: this.privacy_content ? this.privacy_content : "",
+              tag: "agreement"
             },
             {
-              "attributes":{
-                "key":'password_strength',
-                "value":passwordStrength,
-                "tag": 'default'
-               }
+              "key":'password_length',
+              "value":this.pwdLength,
+              "tag": 'default'
             },
             {
-              "attributes":{
-                "key":'register_type',
-                "value":this.register_type,
-                "tag": 'default'
-               }
+              "key":'password_strength',
+              "value":passwordStrength,
+              "tag": 'default'
             },
             {
-              "attributes":{
-                "key":'open_ext_fields',
-                "value": this.extensionOn ? 1 : 0,
-                "tag": 'default'
-               }
+              "key":'open_ext_fields',
+              "value": this.extensionOn ? 1 : 0,
+              "tag": 'default'
             },
            ]
         }
@@ -250,15 +208,17 @@ export default {
           } else {
             this.$message.error(data.errors[0].code);
           }
-          // this.$message.error(data.errors[0].code);
         }else {
+          if (data.Code !== 0) {
+            this.$message.error(data.Message);
+            return
+          }
           this.$message({message: '提交成功', type: 'success'});
         }
       })
 
     },
     configurat() {
-      console.log('配置信息');
       this.$router.push({
         path: "/admin/registration-btn",
       });

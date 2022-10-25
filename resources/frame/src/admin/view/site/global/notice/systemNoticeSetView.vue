@@ -15,25 +15,25 @@
           </el-table-column>
 
           <el-table-column
-            prop="_data.name"
+            prop="name"
             label="通知类型"
           >
           </el-table-column>
 
           <el-table-column
-            prop="_data.type_status"
+            prop="typeStatus"
             label="通知方式"
             align="center"
           >
           <template slot-scope="scope">
               <span
                 class="notice_type"
-                :class="item.is_error === 1 && 'notice_type_error'"
-                v-for="(item, index) in scope.row._data.type_status"
+                :class="item.isError === 1 && 'notice_type_error'"
+                v-for="(item, index) in scope.row.typeStatus"
                 :key="item.type"
                 @click="handleError(item)"
               >
-                {{ item.type + (index < scope.row._data.type_status.length -1? "、" : "") }}
+                {{ item.type + (index < scope.row.typeStatus.length -1? "、" : "") }}
               </span>
             </template>
           </el-table-column>
@@ -45,7 +45,7 @@
             <template slot-scope="scope">
                 <el-button
                   size="mini"
-                  @click="configClick(scope.row._data.id,scope.row._data.name)">
+                  @click="configClick(scope.row.typeStatus, scope.row.name)">
                   配置
                 </el-button>
             </template>
