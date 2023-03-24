@@ -26,8 +26,9 @@ class SiteInfoListener
 {
     public function subscribe(Dispatcher $events)
     {
-        $events->listen(AdminSiteInfo::class, QcloudDaily::class);
-        $events->listen(AdminSiteInfo::class, QcloudSiteInfoDaily::class);
+        // $events->listen(AdminSiteInfo::class, QcloudDaily::class);
+        // $events->listen(AdminSiteInfo::class, QcloudSiteInfoDaily::class);
+        //去掉迁移 数据上报 监听
 
     }
 

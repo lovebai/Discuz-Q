@@ -42,7 +42,7 @@ class ForumSettingsController extends DzqController
     public function main()
     {
         $data = $this->forumSettingMain();
-        $this->events->dispatch(new AdminSiteInfo($this->user));
+        // $this->events->dispatch(new AdminSiteInfo($this->user));//去掉每日分析数据上报迁移到 forum 接口
         $this->outPut(ResponseCode::SUCCESS, '', $data);
     }
 }

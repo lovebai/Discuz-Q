@@ -137,7 +137,7 @@ class QcloudSiteInfoDaily
             'site_info_dailies'    =>  $site_info_dailies
         ];
         try {
-//            $this->siteInfoDaily($json)->wait(); //停止上报
+           $this->siteInfoDaily($json)->wait();
             SiteInfoDaily::query()->whereIn('id', array_column($site_info_dailies, 'id'))->update(['is_upload' => 1]);
             app('cache')->put('qcloud_site_info_daily_'.$settings['site_id'], 1, $cache_time);
         } catch (\Exception $e) {
